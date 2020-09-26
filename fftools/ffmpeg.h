@@ -19,6 +19,7 @@
 #ifndef FFTOOLS_FFMPEG_H
 #define FFTOOLS_FFMPEG_H
 
+#include <stdlib.h>
 #include "config.h"
 
 #include <stdint.h>
@@ -607,6 +608,17 @@ extern AVIOContext *progress_avio;
 extern float max_error_rate;
 extern char *videotoolbox_pixfmt;
 
+/* SAGETV CUSTOMIZATIONS */
+extern int active_file;
+extern int stdin_ctrl;
+extern int dump_metadata;
+extern int min_pix_energy;
+extern int min_pix_var;
+extern int min_pix_frames_left;
+extern int force_interlaced;
+//extern int bug_broken_dts;
+/* END SAGETV CUSTOMIZATIONS */
+
 extern int filter_nbthreads;
 extern int filter_complex_nbthreads;
 extern int vstats_version;
@@ -663,5 +675,15 @@ int hw_device_setup_for_encode(OutputStream *ost);
 int hw_device_setup_for_filter(FilterGraph *fg);
 
 int hwaccel_decode_init(AVCodecContext *avctx);
+
+/* SAGETV CUSTOMIZATION */
+
+#ifdef __MINGW32__
+extern void set_priority(const char *arg);
+#endif
+
+extern void writelog(const char *text);
+void closelog(void);
+/* END SAGETV CUSTOMIZTION */
 
 #endif /* FFTOOLS_FFMPEG_H */

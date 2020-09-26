@@ -19,6 +19,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+// for nanosleep on non-Win platforms
+#ifndef __MINGW32__
+#include <time.h>
+#endif
+
 #include "libavutil/avstring.h"
 #include "libavutil/internal.h"
 #include "libavutil/opt.h"
@@ -106,9 +111,10 @@ static const AVClass pipe_class = {
     .version    = LIBAVUTIL_VERSION_INT,
 };
 
+/*
 static int file_read(URLContext *h, unsigned char *buf, int size)
 {
-    FileContext *c = h->priv_data;
+    FileContext *c = h->priv_data; 
     int ret;
     size = FFMIN(size, c->blocksize);
     ret = read(c->fd, buf, size);
@@ -118,6 +124,46 @@ static int file_read(URLContext *h, unsigned char *buf, int size)
         return AVERROR_EOF;
     return (ret == -1) ? AVERROR(errno) : ret;
 }
+*/
+
+/* SAGETV CUSTOMIZATIONS */
+static int file_read(URLContext *h, unsigned char *buf, int size)
+{
+    FileContext *c = h->priv_data;
+    
+    
+    int ret;
+    size = FFMIN(size, c->blocksize);
+    
+    do
+    {
+    
+        ret = read(c->fd, buf, size);
+    
+        if (ret <= 0 && ((h->flags & URL_ACTIVEFILE) == URL_ACTIVEFILE))
+        {
+#ifdef __MINGW32__
+            usleep(20000);
+#else
+            struct timespec ts;
+            ts.tv_sec = 0;
+            ts.tv_nsec = 20000000;
+            nanosleep(&ts, NULL);
+#endif
+        }
+        else
+        {
+            break;
+        }
+    } while (1);
+    
+    if (ret == 0 && c->follow)
+        return AVERROR(EAGAIN);
+    if (ret == 0)
+        return AVERROR_EOF;
+    return (ret == -1) ? AVERROR(errno) : ret;
+}
+/* SAGETV CUSTOMIZATIONS */
 
 static int file_write(URLContext *h, const unsigned char *buf, int size)
 {

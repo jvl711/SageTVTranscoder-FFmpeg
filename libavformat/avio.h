@@ -44,6 +44,10 @@
  */
 #define AVIO_SEEKABLE_TIME   (1 << 1)
 
+// Active files are files that are open and being written to (for DVR transcoding)
+#define URL_ACTIVEFILE 1024
+
+
 /**
  * Callback for checking whether to abort blocking functions.
  * AVERROR_EXIT is returned in this case by the interrupted

@@ -43,6 +43,7 @@
 #include "libavformat/avformat.h"
 #include "libavdevice/avdevice.h"
 #include "libswresample/swresample.h"
+#include "libavutil/avutil.h"
 #include "libavutil/opt.h"
 #include "libavutil/channel_layout.h"
 #include "libavutil/parseutils.h"
@@ -105,6 +106,7 @@
 #include "cmdutils.h"
 
 #include "libavutil/avassert.h"
+#include "libavformat/url.h"
 
 const char program_name[] = "ffmpeg";
 const int program_birth_year = 2000;
@@ -172,6 +174,16 @@ static void free_input_threads(void);
    Convert subtitles to video with alpha to insert them in filter graphs.
    This is a temporary solution until libavfilter gets real subtitles support.
  */
+
+/* SAGETV CUSTOMIZATION */
+
+//static int calc_pixel_stats(AVOutputStream *ist, AVFrame *picture, int* average, int* variance);
+
+#define CMD_READ_BUF_SIZE 64
+static int cmdReadBufPos = 0;
+static char cmdReadBuf[CMD_READ_BUF_SIZE];
+
+/* END SAGETV CUSTOMIZATION */
 
 static int sub2video_get_blank_frame(InputStream *ist)
 {
@@ -430,6 +442,7 @@ void term_init(void)
 }
 
 /* read a key without blocking */
+/*
 static int read_key(void)
 {
     unsigned char ch;
@@ -461,7 +474,7 @@ static int read_key(void)
     }
 
     if (is_pipe) {
-        /* When running under a GUI, you will end here. */
+        // When running under a GUI, you will end here.
         if (!PeekNamedPipe(input_handle, NULL, 0, NULL, &nchars, NULL)) {
             // input pipe may have been closed by the program that ran ffmpeg
             return -1;
@@ -480,6 +493,237 @@ static int read_key(void)
 #endif
     return -1;
 }
+*/
+
+/* read a key without blocking */
+#if HAVE_TERMIOS_H
+static int read_key(void)
+{
+    int n = 1;
+    unsigned char ch;
+    struct timeval tv;
+    fd_set rfds;
+
+    FD_ZERO(&rfds);
+    FD_SET(0, &rfds);
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+    n = select(1, &rfds, NULL, NULL, &tv);
+    if (n > 0) {
+		if (stdin_ctrl)
+		{
+			int readcount=0;
+			if(cmdReadBufPos >= CMD_READ_BUF_SIZE)
+			{
+				memset(cmdReadBuf,0,CMD_READ_BUF_SIZE);
+				cmdReadBufPos = 0; // reset buffer if we fill it
+			}
+			if((readcount=read(0, &cmdReadBuf[cmdReadBufPos], CMD_READ_BUF_SIZE - cmdReadBufPos))==-1)
+				return -1;
+			cmdReadBufPos += readcount;
+			while (1)
+			{
+				char *eolPos,*eolPos2;
+				int currCmdLen;
+				cmdReadBuf[ (CMD_READ_BUF_SIZE - 1) > cmdReadBufPos ? 
+				cmdReadBufPos : (CMD_READ_BUF_SIZE - 1) ] = 0;
+				eolPos = strchr(cmdReadBuf, '\n');
+				eolPos2 = strchr(cmdReadBuf, '\r');
+				if (!eolPos && !eolPos2)
+					return -1;
+				if(eolPos==0) eolPos=eolPos2;
+				// We've got a command in the buffer, see what it is and deal with it
+				if (strstr(cmdReadBuf, "inactivefile") == cmdReadBuf)
+				{
+					if (active_file)
+					{
+						int i;
+						active_file = 0;
+						// Inactive file command received, update us accordingly.
+						for (i = 0; i < nb_input_files; i++)
+						{
+							URLContext *uc = input_files[i]->pb->opaque;
+							uc->flags&=~URL_ACTIVEFILE;
+						}
+						fprintf(stderr, "Inactive file message has been processed\n");
+					}
+				}
+				else if (strstr(cmdReadBuf, "videorateadapt") == cmdReadBuf)
+				{
+					// Parse the amount we want to adjust the video bitrate by
+					int videoRateAdjust = atoi(cmdReadBuf + strlen("videorateadapt") + 1) * 1000;
+					//fprintf(stderr, "Got video rate adjustment of %d\n", videoRateAdjust);
+					int i, j;
+					for(i=0;i<nb_output_files;i++)
+					{
+						AVFormatContext *avctx = output_files[i];
+						for (j = 0; j < avctx->nb_streams; j++)
+						{
+							AVStream *st = avctx->streams[j];
+							if(st->codec->codec_type == CODEC_TYPE_VIDEO)
+							st->codec->bit_rate = st->codec->bit_rate + videoRateAdjust;
+						}
+					}
+				}
+				*eolPos = 0;
+				currCmdLen = strlen(cmdReadBuf) + 1;
+				if (currCmdLen < cmdReadBufPos)
+				{
+					strcpy(cmdReadBuf, eolPos + 1);
+					cmdReadBufPos -= currCmdLen;
+					memset(&cmdReadBuf[cmdReadBufPos],0,CMD_READ_BUF_SIZE-cmdReadBufPos);
+				}
+				else
+				{
+					cmdReadBufPos = 0;
+					memset(cmdReadBuf,0,CMD_READ_BUF_SIZE);
+				}
+			}
+			return -1;
+		}
+		else
+		{
+        n = read(0, &ch, 1);
+        if (n == 1)
+            return ch;
+
+        return n;
+    }
+//#elif HAVE_CONIO_H
+//    if(kbhit())
+//        return(getch());
+	}
+    return -1;
+}
+
+#else
+struct {
+	char* name;
+	int prio;
+} priority_presets_defs[] = {
+	{ "realtime", REALTIME_PRIORITY_CLASS},
+	{ "high", HIGH_PRIORITY_CLASS},
+#ifdef ABOVE_NORMAL_PRIORITY_CLASS
+	{ "abovenormal", ABOVE_NORMAL_PRIORITY_CLASS},
+#endif
+	{ "normal", NORMAL_PRIORITY_CLASS},
+#ifdef BELOW_NORMAL_PRIORITY_CLASS
+	{ "belownormal", BELOW_NORMAL_PRIORITY_CLASS},
+#endif
+	{ "idle", IDLE_PRIORITY_CLASS},
+	{ NULL, NORMAL_PRIORITY_CLASS} /* default */
+};
+	
+static int read_key(void)
+{
+    unsigned char ch;
+    DWORD retval;
+    char* eolPos;
+    int i,j;
+    int videoRateAdjust;
+    int currCmdLen;
+	
+    HANDLE mystdin = GetStdHandle(STD_INPUT_HANDLE);
+	
+    if(!PeekNamedPipe(mystdin, NULL, 1, &retval, NULL, NULL) || !retval)
+    {
+	return -1;
+    }
+
+    if (stdin_ctrl)
+    {
+        if (cmdReadBufPos >= CMD_READ_BUF_SIZE)
+	{
+            memset(cmdReadBuf,0,CMD_READ_BUF_SIZE);
+            cmdReadBufPos = 0; // reset buffer if we fill it
+	}
+	
+        if (!ReadFile(mystdin, &(cmdReadBuf[cmdReadBufPos]), CMD_READ_BUF_SIZE - cmdReadBufPos, &retval, NULL))
+        {
+            return -1;
+        }       
+		
+        cmdReadBufPos += retval;
+		
+        while (1)
+	{
+            cmdReadBuf[min(CMD_READ_BUF_SIZE - 1, cmdReadBufPos)] = 0;
+            eolPos = strchr(cmdReadBuf, '\n');
+            
+            if (!eolPos)
+            {
+		return -1;
+            }
+            
+            // We've got a command in the buffer, see what it is and deal with it
+            if (strstr(cmdReadBuf, "inactivefile") == cmdReadBuf)
+            {
+                writelog("STDIN inactivefile called by server");
+                if (active_file)
+                {
+                    active_file = 0;
+                    
+                    // Inactive file command received, update us accordingly.
+                    for (i = 0; i < nb_input_files; i++)
+                    {
+                        
+                        ((URLContext *)input_files[i]->ctx->pb->opaque)->flags =~URL_ACTIVEFILE;
+                        //uc->flags&=~URL_ACTIVEFILE;
+                    }
+                    
+                    fprintf(stderr, "Inactive file message has been processed\n");
+                }
+            }
+            else if (strstr(cmdReadBuf, "videorateadapt") == cmdReadBuf)
+            {
+                writelog("STDIN videorateadpt called by server");
+                
+                // Parse the amount we want to adjust the video bitrate by
+                videoRateAdjust = atoi(cmdReadBuf + strlen("videorateadapt") + 1) * 1000;
+                //fprintf(stderr, "Got video rate adjustment of %d\n", videoRateAdjust);
+                for(i=0;i<nb_output_files;i++)
+                {
+                    AVFormatContext *avctx = output_files[i];
+                    for (j = 0; j < avctx->nb_streams; j++)
+                    {
+                        AVStream *st = avctx->streams[j];
+                        if(st->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+                        st->codec->bit_rate = st->codec->bit_rate + videoRateAdjust;
+                    }
+                }
+            }
+
+            *eolPos = 0;
+            currCmdLen = strlen(cmdReadBuf) + 1;
+
+            if (currCmdLen < cmdReadBufPos)
+            {
+                strcpy(cmdReadBuf, eolPos + 1);
+                cmdReadBufPos -= currCmdLen;
+                memset(&cmdReadBuf[cmdReadBufPos],0,CMD_READ_BUF_SIZE-cmdReadBufPos);
+            }
+            else
+            {
+                cmdReadBufPos = 0;
+                memset(cmdReadBuf,0,CMD_READ_BUF_SIZE);
+            }
+        }
+        
+        return -1;
+    }
+    else
+    {
+        if (ReadFile(mystdin, &ch, 1, &retval, NULL) && retval)
+        {
+            return ch;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+}
+#endif
 
 static int decode_interrupt_cb(void *ctx)
 {
@@ -641,6 +885,7 @@ static void ffmpeg_cleanup(int ret)
     } else if (ret && atomic_load(&transcode_init_done)) {
         av_log(NULL, AV_LOG_INFO, "Conversion failed!\n");
     }
+    
     term_exit();
     ffmpeg_exited = 1;
 }
@@ -4816,6 +5061,55 @@ static void log_callback_null(void *ptr, int level, const char *fmt, va_list vl)
 {
 }
 
+/* SAGETV CUSTOMIZATION */
+FILE *sagelogfile;
+
+void writelog(const char *text)
+{
+    if(sagelogfile == NULL)
+    {
+        sagelogfile = fopen("SageTVTranscoder.log", "a+");
+        
+        if(sagelogfile == NULL)
+        {
+            return;
+        }
+    }
+    
+    fprintf(sagelogfile, "%s\n", text);
+    fflush(sagelogfile);
+}
+
+void closelog()
+{
+    fclose(sagelogfile);
+}
+
+#ifdef __MINGW32__
+void set_priority(const char *arg)
+{
+    char buffer[255];
+    writelog("Setting process priority");
+    
+    sprintf(buffer, "\tPriority Argument: %s", arg);
+    
+    writelog(buffer);
+    
+    int i;
+    for(i=0; priority_presets_defs[i].name; i++)
+    {
+            if(strcasecmp(priority_presets_defs[i].name, arg) == 0)
+                    break;
+    }
+    
+    //sprintf(buffer, "\tselected priority: %d: ", i );
+    //writelog(buffer);
+    SetPriorityClass(GetCurrentProcess(), priority_presets_defs[i].prio);
+}
+
+#endif
+/* END SAGETV CUSTOMIZATION */
+
 int main(int argc, char **argv)
 {
     int i, ret;
@@ -4823,6 +5117,11 @@ int main(int argc, char **argv)
 
     init_dynload();
 
+    /* SAGETV CUSTOMIZTION */
+    writelog("---------------------- FFmpeg starting ---------------------------");
+    
+    //TODO: Dump input arguments
+    
     register_exit(ffmpeg_cleanup);
 
     setvbuf(stderr,NULL,_IONBF,0); /* win32 runtime needs this */
@@ -4868,7 +5167,14 @@ int main(int argc, char **argv)
 
     current_time = ti = get_benchmark_time_stamps();
     if (transcode() < 0)
+    {
+        /* SAGETV CUSTOMIZAIONT */
+        writelog("Exiting after transcode finished\n");
+        writelog("---------------------- FFmpeg exiting ---------------------------\n");
+        closelog();
+        /* END SAGETV CUSTOMIZTION */
         exit_program(1);
+    }
     if (do_benchmark) {
         int64_t utime, stime, rtime;
         current_time = get_benchmark_time_stamps();
@@ -4884,6 +5190,12 @@ int main(int argc, char **argv)
     if ((decode_error_stat[0] + decode_error_stat[1]) * max_error_rate < decode_error_stat[1])
         exit_program(69);
 
+    /* SAGETV CUSTOMIZAIONT */
+    writelog("Exiting for some other reason\n");
+    writelog("---------------------- FFmpeg exiting ---------------------------\n");
+    closelog();
+    /* END SAGETV CUSTOMIZTION */
+    
     exit_program(received_nb_signals ? 255 : main_return_code);
     return main_return_code;
 }

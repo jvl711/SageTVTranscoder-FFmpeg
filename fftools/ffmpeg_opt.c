@@ -23,9 +23,9 @@
 
 #include "ffmpeg.h"
 #include "cmdutils.h"
-
 #include "libavformat/avformat.h"
 
+#include "libavformat/avio.h"
 #include "libavcodec/avcodec.h"
 
 #include "libavfilter/avfilter.h"
@@ -41,6 +41,7 @@
 #include "libavutil/parseutils.h"
 #include "libavutil/pixdesc.h"
 #include "libavutil/pixfmt.h"
+#include "libavformat/url.h"
 
 #define DEFAULT_PASS_LOGFILENAME_PREFIX "ffmpeg2pass"
 
@@ -172,6 +173,16 @@ int filter_nbthreads = 0;
 int filter_complex_nbthreads = 0;
 int vstats_version = 2;
 
+/* SAGETV CUSTOMIZATIONS */
+int active_file = 0;
+int stdin_ctrl = 0;
+int dump_metadata = 0;
+int min_pix_energy = 0;
+int min_pix_var = 0;
+int min_pix_frames_left = 0;
+int force_interlaced = -1;
+//int bug_broken_dts;
+/* END SAGETV CUSTOMIZATIONS */
 
 static int intra_only         = 0;
 static int file_overwrite     = 0;
@@ -610,6 +621,13 @@ static void parse_meta_type(char *arg, char *type, int *index, const char **stre
     } else
         *type = 'g';
 }
+
+/* SAGETV CUSTOMIZATION */
+static void opt_priority(void *optctx, const char *opt, const char *arg)
+{
+    set_priority(arg);
+}
+/* END SAGETV CUSTOMIZATION */
 
 static int copy_metadata(char *outspec, char *inspec, AVFormatContext *oc, AVFormatContext *ic, OptionsContext *o)
 {
@@ -1158,8 +1176,12 @@ static int open_input_file(OptionsContext *o, const char *filename)
         av_dict_set(&o->g->format_opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
         scan_all_pmts_set = 1;
     }
+    
+    
     /* open the input file with generic avformat function */
     err = avformat_open_input(&ic, filename, file_iformat, &o->g->format_opts);
+
+    
     if (err < 0) {
         print_error(filename, err);
         if (err == AVERROR_PROTOCOL_NOT_FOUND)
@@ -1175,6 +1197,14 @@ static int open_input_file(OptionsContext *o, const char *filename)
     for (i = 0; i < ic->nb_streams; i++)
         choose_decoder(o, ic, ic->streams[i]);
 
+    /* SAGETV CUSTOMIZATIONS */
+    if (active_file)
+    {
+    ((URLContext *)ic->pb->opaque)->flags |= URL_ACTIVEFILE;
+        //uc->flags|=URL_ACTIVEFILE;
+    }
+    /* END SAGETV CUSTOMIZATIONS */
+    
     if (find_stream_info) {
         AVDictionary **opts = setup_find_stream_info_opts(ic, o->g->codec_opts);
         int orig_nb_streams = ic->nb_streams;
@@ -3756,6 +3786,18 @@ const OptionDef options[] = {
         "force data codec ('copy' to copy stream)", "codec" },
     { "dn", OPT_BOOL | OPT_VIDEO | OPT_OFFSET | OPT_INPUT | OPT_OUTPUT, { .off = OFFSET(data_disable) },
         "disable data" },
+    /* SAGETV CUSTOMIZATIONS */
+        { "stdinctrl", OPT_BOOL | OPT_EXPERT, {&stdin_ctrl}, "accept control commands through stdin (inactivefile, rateadjust)" },
+        { "activefile", OPT_BOOL | OPT_EXPERT, {&active_file}, "active file" },
+        { "dumpmetadata", OPT_BOOL | OPT_EXPERT, {&dump_metadata}, "dump metadata information to stderr" },
+        { "minpixenergy", HAS_ARG | OPT_INT, {&min_pix_energy}, "min pixel energy for thumb" },
+        { "minpixvar", HAS_ARG | OPT_INT, {&min_pix_var}, "min pixel variance for thumb" },
+        { "minpixnumframes", HAS_ARG | OPT_INT, {&min_pix_frames_left}, "max num frames to check for min pix req." },
+        //{ "brokendts", OPT_BOOL | OPT_EXPERT, {&bug_broken_dts}, "Ignores DTS values in some streams that are broken" },  
+#ifdef __MINGW32__
+	{ "priority", HAS_ARG | OPT_EXPERT, {opt_priority}, "set process priority (Win32)", "priority" },
+#endif
+    /* END SAGETV CUSTOMIZATIONS */
 
 #if CONFIG_VAAPI
     { "vaapi_device", HAS_ARG | OPT_EXPERT, { .func_arg = opt_vaapi_device },
