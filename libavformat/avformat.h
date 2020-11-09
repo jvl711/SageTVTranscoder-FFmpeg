@@ -3090,4 +3090,11 @@ AVRational av_stream_get_codec_timebase(const AVStream *st);
  * @}
  */
 
+/**
+ * SAGETV CUSTOMIZAION
+ * Reports the metadata in the given context. Data for the context and
+ * for each of the streams are reported.
+ */
+void av_metadata_dump(struct AVFormatContext *ic);
+
 #endif /* AVFORMAT_AVFORMAT_H */

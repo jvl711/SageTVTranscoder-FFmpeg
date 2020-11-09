@@ -1277,6 +1277,14 @@ static int open_input_file(OptionsContext *o, const char *filename)
     /* update the current parameters so that they match the one of the input stream */
     add_input_streams(o, ic);
 
+    /* dump metadata 
+     * SAGETV CUSTOMIZATION
+     */
+    if (dump_metadata)
+    {
+        av_metadata_dump(ic);
+    }
+    
     /* dump the file content */
     av_dump_format(ic, nb_input_files, filename, 0);
 

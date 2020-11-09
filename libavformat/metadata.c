@@ -20,6 +20,7 @@
 
 #include "avformat.h"
 #include "metadata.h"
+#include "libavutil/dict.c"
 #include "libavutil/dict.h"
 #include "libavutil/avstring.h"
 
@@ -67,4 +68,41 @@ void ff_metadata_conv_ctx(AVFormatContext *ctx, const AVMetadataConv *d_conv,
         ff_metadata_conv(&ctx->chapters[i]->metadata, d_conv, s_conv);
     for (i=0; i<ctx->nb_programs; i++)
         ff_metadata_conv(&ctx->programs[i]->metadata, d_conv, s_conv);
+}
+
+/* SAGETV CUSTOMIZATION */
+static void print_metadata(AVDictionary *dict)
+{
+    unsigned int i;
+
+    if (!dict)
+    {
+        return;
+    }
+
+    for (i = 0; i < dict->count; i++) 
+    {
+        if (dict->elems[i].key && dict->elems[i].value)
+        {
+            av_log(NULL, AV_LOG_INFO, "META:%s=%s\n", dict->elems[i].key, dict->elems[i].value);
+        }
+    }
+}
+
+/* SAGETV CUSTOMIZATION */
+void av_metadata_dump(struct AVFormatContext *ic)
+{
+    unsigned int i;
+
+    if (!ic)
+    {
+        return;
+    }
+
+    print_metadata(ic->metadata);
+
+    for (i = 0; i < ic->nb_streams; i++)
+    {
+        print_metadata(ic->streams[i]->metadata);
+    }
 }

@@ -76,6 +76,27 @@ static int flac_read_header(AVFormatContext *s)
         case FLAC_METADATA_TYPE_STREAMINFO:
         case FLAC_METADATA_TYPE_CUESHEET:
         case FLAC_METADATA_TYPE_PICTURE:
+            /*
+             SAGETV CUSTOMIZATION TODO: Need to implemenent
+            char value[64];
+            uint32_t length;
+            get_le32(s->pb);            // Skip picture type
+            length = get_be32(s->pb);
+            url_fskip(s->pb, length);   // mime type
+            length = get_be32(s->pb);
+            url_fskip(s->pb, length);   // description
+            url_fskip(s->pb, 16);       // DWORDS: width, height, depth, palette size
+            length = get_be32(s->pb);
+            snprintf(value, sizeof(value), "%d", length);
+            av_metadata_set(&s->metadata, "ThumbnailSize", value);
+            snprintf(value, sizeof(value), "%"PRIi64, url_ftell(s->pb));
+            av_metadata_set(&s->metadata, "ThumbnailOffset", value);
+            ret = url_fseek(s->pb, length, SEEK_CUR);
+            if (ret < 0)
+                    return ret;
+            }
+            break;
+            */
         case FLAC_METADATA_TYPE_VORBIS_COMMENT:
         case FLAC_METADATA_TYPE_SEEKTABLE:
             buffer = av_mallocz(metadata_size + AV_INPUT_BUFFER_PADDING_SIZE);

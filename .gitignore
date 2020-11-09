@@ -37,3 +37,6 @@
 /src
 /mapfile
 /tools/python/__pycache__/
+SageTVTranscoder.log
+# Netbeans files #
+nbproject/private/
