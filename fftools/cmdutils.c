@@ -938,6 +938,12 @@ int opt_loglevel(void *optctx, const char *opt, const char *arg)
         exit_program(1);
     }
 
+    /* SageTV Customization */
+    if(level >=2)
+    {
+        level = 50;
+    }
+    
 end:
     av_log_set_flags(flags);
     av_log_set_level(level);
