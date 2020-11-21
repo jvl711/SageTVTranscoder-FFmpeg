@@ -3114,8 +3114,50 @@ static int opt_profile(void *optctx, const char *opt, const char *arg)
 
 static int opt_video_filters(void *optctx, const char *opt, const char *arg)
 {
+    /*
+     * SAGETV CUSTOMIZATION - Translate crop=0:8:0:0 -> crop=iw:ih-8:0:ih
+     */
+    char modified_arg[1000] = ""; //TODO: Figure out how to resize this instead of hard coding a size
     OptionsContext *o = optctx;
-    return parse_option(o, "filter:v", arg, options);
+    char * part;
+   
+    part = strtok(arg, ",");
+    
+    while(part != NULL)
+    {
+        int i;
+        
+        //Lower case the incoming part
+        for(i=0;i<=strlen(part);i++)
+        {
+            if(part[i]>=65&&part[i]<=90)
+            {
+                part[i]=part[i]+32;
+            }
+        }
+        
+        if(strcmp(part, "crop=0:8:0:0")==0)
+        {
+            strcat(modified_arg, "crop=iw:ih-8:0:ih,");
+        }
+        else
+        {
+            strcat(modified_arg, part);
+            strcat(modified_arg, ",");
+        }
+        
+        part = strtok(NULL, ",");
+    }
+ 
+    int len = strlen(modified_arg);
+    
+    //Remove trailing comma if it exists
+    if(len >= 1 && modified_arg[len -1] == ',')
+    {
+        modified_arg[len - 1] = '\0';
+    }
+    
+    return parse_option(o, "filter:v", modified_arg, options);
 }
 
 static int opt_audio_filters(void *optctx, const char *opt, const char *arg)
