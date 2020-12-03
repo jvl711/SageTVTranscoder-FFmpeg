@@ -1177,6 +1177,27 @@ static int open_input_file(OptionsContext *o, const char *filename)
         scan_all_pmts_set = 1;
     }
     
+    //SAGETV CUSTOMIZATION
+    //TODO: Do further investigation and evaluation if stv:// protocol is needed
+    char tempfilename [1000];
+    
+    if (strncmp("stv://localhost/", filename, 16) == 0)
+    {
+        int pos = 0;
+        
+        if(strlen(filename) < 1000)
+        {
+            for(int i = 16; i < strlen(filename); i++)
+            {
+                tempfilename[pos++] = filename[i];
+            }
+            tempfilename[pos++] = '\0';
+        }
+        
+        filename = tempfilename;
+    }
+    
+    
     
     /* open the input file with generic avformat function */
     err = avformat_open_input(&ic, filename, file_iformat, &o->g->format_opts);
