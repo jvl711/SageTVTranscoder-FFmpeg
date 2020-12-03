@@ -303,6 +303,24 @@ static int X264_frame(AVCodecContext *ctx, AVPacket *pkt, const AVFrame *frame,
     X264Opaque *out_opaque;
     AVFrameSideData *sd;
 
+    //SAGETV CUSTOMIZATION
+    // NARFLEX: See if the bitrate information has changed, and if so, reconfigure the encoder
+    
+    
+    
+    if (ctx->bit_rate/1000 != x4->params.rc.i_bitrate)
+    {
+        int res;
+        int rateAdjust = ctx->bit_rate/1000 - x4->params.rc.i_bitrate;
+        x4->params.rc.i_bitrate         += rateAdjust;
+        x4->params.rc.i_vbv_max_bitrate += rateAdjust;
+        x4->params.rc.f_rate_tolerance = (float)ctx->bit_rate_tolerance/ctx->bit_rate;
+        res = x264_encoder_reconfig(x4->enc, &(x4->params));
+    }
+    
+    
+    
+    
     x264_picture_init( &x4->pic );
     x4->pic.img.i_csp   = x4->params.i_csp;
 #if X264_BUILD >= 153

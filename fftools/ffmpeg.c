@@ -556,7 +556,7 @@ static int read_key(void)
 					int i, j;
 					for(i=0;i<nb_output_files;i++)
 					{
-						AVFormatContext *avctx = output_files[i];
+						AVFormatContext *avctx = output_files[i]->ctx;
 						for (j = 0; j < avctx->nb_streams; j++)
 						{
 							AVStream *st = avctx->streams[j];
@@ -658,7 +658,7 @@ static int read_key(void)
             // We've got a command in the buffer, see what it is and deal with it
             if (strstr(cmdReadBuf, "inactivefile") == cmdReadBuf)
             {
-                writelog("STDIN inactivefile called by server");
+                writelog("STDIN inactivefile called by server\n");
                 if (active_file)
                 {
                     active_file = 0;
@@ -676,19 +676,40 @@ static int read_key(void)
             }
             else if (strstr(cmdReadBuf, "videorateadapt") == cmdReadBuf)
             {
-                writelog("STDIN videorateadpt called by server");
+                writelog("STDIN videorateadpt called by server\n");
+                writelog("\tCmdbuffer: ");
+                writelog(cmdReadBuf);
+                writelog("\n");
                 
                 // Parse the amount we want to adjust the video bitrate by
                 videoRateAdjust = atoi(cmdReadBuf + strlen("videorateadapt") + 1) * 1000;
+                
+                
+                char buffer[255];
+            
+                sprintf(buffer, "\tVideoAdjustRate: %d\n", videoRateAdjust);
+                
+                writelog(buffer);
+                
+                
                 //fprintf(stderr, "Got video rate adjustment of %d\n", videoRateAdjust);
                 for(i=0;i<nb_output_files;i++)
                 {
-                    AVFormatContext *avctx = output_files[i];
+                    AVFormatContext *avctx = output_files[i]->ctx;
                     for (j = 0; j < avctx->nb_streams; j++)
                     {
                         AVStream *st = avctx->streams[j];
+                        
                         if(st->codec->codec_type == AVMEDIA_TYPE_VIDEO)
-                        st->codec->bit_rate = st->codec->bit_rate + videoRateAdjust;
+                        {
+                            sprintf(buffer, "\tCurrent Bitrate: %" PRId64 "\n", st->codec->bit_rate);
+                            writelog(buffer);
+                            //list->codec->bit_rate = st->codec->bit_rate + videoRateAdjust;
+                            st->codec->bit_rate = st->codec->bit_rate + videoRateAdjust;
+                            
+                            //st->codecpar->bit_rate =  st->codecpar->bit_rate + videoRateAdjust;
+                        }
+                        
                     }
                 }
             }
@@ -2008,8 +2029,18 @@ static void print_report(int is_last_report, int64_t timer_start, int64_t cur_ti
     if (pts == AV_NOPTS_VALUE) {
         av_bprintf(&buf, "N/A ");
     } else {
-        av_bprintf(&buf, "%s%02d:%02d:%02d.%02d ",
-                   hours_sign, hours, mins, secs, (100 * us) / AV_TIME_BASE);
+
+        //SAGETV CUSTOMIZATION - SageTV was expecting this older time style
+        //TODO: It might make more sense to only do this in certain situations.  
+        //Add a task to make hit dependent on some peice of info passed in (
+        //(-v 3) might be a good thing to looks at 
+        float ti1 = ost->sync_opts * av_q2d(enc->time_base);
+        if (ti1 < 0.01)
+            ti1 = 0.01;
+        
+        av_bprintf(&buf, "%0.3f ", ti1);
+        //av_bprintf(&buf, "%s%02d:%02d:%02d.%02d ",
+        //           hours_sign, hours, mins, secs, (100 * us) / AV_TIME_BASE);
     }
 
     if (bitrate < 0) {
@@ -5076,7 +5107,8 @@ void writelog(const char *text)
         }
     }
     
-    fprintf(sagelogfile, "%s\n", text);
+    fprintf(sagelogfile, "%s", text);
+    
     fflush(sagelogfile);
 }
 
@@ -5089,21 +5121,20 @@ void closelog()
 void set_priority(const char *arg)
 {
     char buffer[255];
-    writelog("Setting process priority");
+    int i;
     
-    sprintf(buffer, "\tPriority Argument: %s", arg);
+    writelog("Setting process priority\n");
+    
+    sprintf(buffer, "\tPriority Argument: %s\n", arg);
     
     writelog(buffer);
     
-    int i;
     for(i=0; priority_presets_defs[i].name; i++)
     {
             if(strcasecmp(priority_presets_defs[i].name, arg) == 0)
                     break;
     }
     
-    //sprintf(buffer, "\tselected priority: %d: ", i );
-    //writelog(buffer);
     SetPriorityClass(GetCurrentProcess(), priority_presets_defs[i].prio);
 }
 
@@ -5118,9 +5149,27 @@ int main(int argc, char **argv)
     init_dynload();
 
     /* SAGETV CUSTOMIZTION */
-    writelog("---------------------- FFmpeg starting ---------------------------");
+    writelog("################################ SageTVTranscoder (FFmpeg) starting ################################\n");
+    writelog("Arguments: ");
     
     //TODO: Dump input arguments
+    for(i = 0; i < argc; i++)
+    {
+        if(strlen(argv[i]) < 200)
+        {
+            char buffer[255];
+            
+            sprintf(buffer, "%s ", argv[i]);
+
+            writelog(buffer);
+        }
+        else
+        {
+            writelog("Argument too large! ");
+        }
+    }
+    
+    writelog("\n");
     
     register_exit(ffmpeg_cleanup);
 
@@ -5170,7 +5219,7 @@ int main(int argc, char **argv)
     {
         /* SAGETV CUSTOMIZAIONT */
         writelog("Exiting after transcode finished\n");
-        writelog("---------------------- FFmpeg exiting ---------------------------\n");
+        writelog("################################ Exiting ################################\n");
         closelog();
         /* END SAGETV CUSTOMIZTION */
         exit_program(1);
@@ -5192,7 +5241,7 @@ int main(int argc, char **argv)
 
     /* SAGETV CUSTOMIZAIONT */
     writelog("Exiting for some other reason\n");
-    writelog("---------------------- FFmpeg exiting ---------------------------\n");
+    writelog("################################ Exiting ################################\n");
     closelog();
     /* END SAGETV CUSTOMIZTION */
     

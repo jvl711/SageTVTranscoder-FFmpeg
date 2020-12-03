@@ -38,5 +38,9 @@
 /mapfile
 /tools/python/__pycache__/
 SageTVTranscoder.log
+# External library Project Files #
+/x264
+/x265
+/pkgconfig
 # Netbeans files #
 nbproject/private/
