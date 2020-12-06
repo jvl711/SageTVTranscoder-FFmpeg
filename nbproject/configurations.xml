@@ -8898,8 +8898,12 @@
           </undefinedList>
         </cTool>
       </item>
-      <item path="libavcodec/dxva2_mpeg2.c" ex="false" tool="0" flavor2="3">
+      <item path="libavcodec/dxva2_mpeg2.c" ex="false" tool="0" flavor2="10">
         <cTool flags="1">
+          <incDir>
+            <pElem>pkgconfig/include</pElem>
+            <pElem>../pkgconfig/include</pElem>
+          </incDir>
           <preprocessorList>
             <Elem>BUILDING_avcodec</Elem>
             <Elem>HAVE_AV_CONFIG_H</Elem>

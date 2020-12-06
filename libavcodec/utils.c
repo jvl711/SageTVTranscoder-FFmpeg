@@ -63,6 +63,7 @@
 #endif
 
 #include "libavutil/ffversion.h"
+#include "libavformat/avformat.h"
 const char av_codec_ffversion[] = "FFmpeg version " FFMPEG_VERSION;
 
 static AVMutex codec_mutex = AV_MUTEX_INITIALIZER;
@@ -1344,6 +1345,159 @@ void avcodec_string(char *buf, int buf_size, AVCodecContext *enc, int encode)
                          enc->time_base.num / g, enc->time_base.den / g);
             }
         }
+        if (encode) {
+            snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                     ", q=%d-%d", enc->qmin, enc->qmax);
+        } else {
+            if (enc->properties & FF_CODEC_PROPERTY_CLOSED_CAPTIONS)
+                snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                         ", Closed Captions");
+            if (enc->properties & FF_CODEC_PROPERTY_LOSSLESS)
+                snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                         ", lossless");
+        }
+        break;
+    case AVMEDIA_TYPE_AUDIO:
+        av_strlcat(buf, separator, buf_size);
+
+        if (enc->sample_rate) {
+            snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                     "%d Hz, ", enc->sample_rate);
+        }
+        av_get_channel_layout_string(buf + strlen(buf), buf_size - strlen(buf), enc->channels, enc->channel_layout);
+        if (enc->sample_fmt != AV_SAMPLE_FMT_NONE) {
+            snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                     ", %s", av_get_sample_fmt_name(enc->sample_fmt));
+        }
+        if (   enc->bits_per_raw_sample > 0
+            && enc->bits_per_raw_sample != av_get_bytes_per_sample(enc->sample_fmt) * 8)
+            snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                     " (%d bit)", enc->bits_per_raw_sample);
+        if (av_log_get_level() >= AV_LOG_VERBOSE) {
+            if (enc->initial_padding)
+                snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                         ", delay %d", enc->initial_padding);
+            if (enc->trailing_padding)
+                snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                         ", padding %d", enc->trailing_padding);
+        }
+        break;
+    case AVMEDIA_TYPE_DATA:
+        if (av_log_get_level() >= AV_LOG_DEBUG) {
+            int g = av_gcd(enc->time_base.num, enc->time_base.den);
+            if (g)
+                snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                         ", %d/%d",
+                         enc->time_base.num / g, enc->time_base.den / g);
+        }
+        break;
+    case AVMEDIA_TYPE_SUBTITLE:
+        if (enc->width)
+            snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                     ", %dx%d", enc->width, enc->height);
+        break;
+    default:
+        return;
+    }
+    if (encode) {
+        if (enc->flags & AV_CODEC_FLAG_PASS1)
+            snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                     ", pass 1");
+        if (enc->flags & AV_CODEC_FLAG_PASS2)
+            snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                     ", pass 2");
+    }
+    bitrate = get_bit_rate(enc);
+    if (bitrate != 0) {
+        snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                 ", %"PRId64" kb/s", bitrate / 1000);
+    } else if (enc->rc_max_rate > 0) {
+        snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                 ", max. %"PRId64" kb/s", enc->rc_max_rate / 1000);
+    }
+}
+
+/*
+ * SAGETV CUSTOMIZATION
+ * Customized the whole method to match the other output format
+ */
+void sagetv_avcodec_string(char *buf, int buf_size, AVCodecContext *enc, AVRational fps, int encode)
+{
+    const char *codec_type;
+    const char *codec_name;
+    const char *profile = NULL;
+    int64_t bitrate;
+    int new_line = 0;
+    AVRational display_aspect_ratio;
+    const char *separator = enc->dump_separator ? (const char *)enc->dump_separator : ", ";
+
+    if (!buf || buf_size <= 0)
+        return;
+    codec_type = av_get_media_type_string(enc->codec_type);
+    codec_name = avcodec_get_name(enc->codec_id);
+    profile = avcodec_profile_name(enc->codec_id, enc->profile);
+
+    snprintf(buf, buf_size, "%s: %s", codec_type ? codec_type : "unknown",
+             codec_name);
+    buf[0] ^= 'a' ^ 'A'; /* first letter in uppercase */
+
+    if (enc->codec && strcmp(enc->codec->name, codec_name))
+        snprintf(buf + strlen(buf), buf_size - strlen(buf), " (%s)", enc->codec->name);
+
+    
+    
+    switch (enc->codec_type) {
+    case AVMEDIA_TYPE_VIDEO:
+        {
+            char detail[256] = "(";
+
+            av_strlcat(buf, separator, buf_size);
+
+            snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                 "%s", enc->pix_fmt == AV_PIX_FMT_NONE ? "none" :
+                     av_get_pix_fmt_name(enc->pix_fmt));
+    
+        }
+    
+        if (enc->width) {
+            av_strlcat(buf, new_line ? separator : ", ", buf_size);
+
+            snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                     "%dx%d",
+                     enc->width, enc->height);
+
+            snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                 ", %d/%d",
+                 fps.den, fps.num);
+            
+            if (enc->sample_aspect_ratio.num) {
+                av_reduce(&display_aspect_ratio.num, &display_aspect_ratio.den,
+                          enc->width * (int64_t)enc->sample_aspect_ratio.num,
+                          enc->height * (int64_t)enc->sample_aspect_ratio.den,
+                          1024 * 1024);
+                snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                         ", AR: %d:%d",
+                         display_aspect_ratio.num, display_aspect_ratio.den);
+            }
+            
+            if (enc->field_order != AV_FIELD_UNKNOWN) {
+                const char *field_order = "progressive";
+                if (enc->field_order == AV_FIELD_TT)
+                    field_order = "top first";
+                else if (enc->field_order == AV_FIELD_BB)
+                    field_order = "bottom first";
+                else if (enc->field_order == AV_FIELD_TB)
+                    field_order = "top coded first (swapped)";
+                else if (enc->field_order == AV_FIELD_BT)
+                    field_order = "bottom coded first (swapped)";
+
+                snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                         ", %s",
+                         field_order);
+            }
+
+        }
+
         if (encode) {
             snprintf(buf + strlen(buf), buf_size - strlen(buf),
                      ", q=%d-%d", enc->qmin, enc->qmax);

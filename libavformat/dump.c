@@ -510,10 +510,11 @@ static void dump_stream_format(AVFormatContext *ic, int i,
 
     if (separator)
         av_opt_set(avctx, "dump_separator", separator, 0);
-    avcodec_string(buf, sizeof(buf), avctx, is_output);
+    sagetv_avcodec_string(buf, sizeof(buf), avctx, st->avg_frame_rate, is_output);
     avcodec_free_context(&avctx);
 
-    av_log(NULL, AV_LOG_INFO, "    Stream #%d:%d", index, i);
+    /* SAGETV CUSTOMIZATION - The separator in the stream is '.' instead of ':' in the current version */
+    av_log(NULL, AV_LOG_INFO, "    Stream #%d.%d", index, i);
 
     /* the pid is an important information, so we display it */
     /* XXX: add a generic system */
@@ -556,6 +557,9 @@ static void dump_stream_format(AVFormatContext *ic, int i,
             print_fps(1 / av_q2d(st->codec->time_base), "tbc");
     }
 
+    /* SAEGTV CUSTOMIZATION - These are not present in the current output.  Parser would need to be enhanced */
+    
+    /*
     if (st->disposition & AV_DISPOSITION_DEFAULT)
         av_log(NULL, AV_LOG_INFO, " (default)");
     if (st->disposition & AV_DISPOSITION_DUB)
@@ -590,10 +594,15 @@ static void dump_stream_format(AVFormatContext *ic, int i,
         av_log(NULL, AV_LOG_INFO, " (dependent)");
     if (st->disposition & AV_DISPOSITION_STILL_IMAGE)
         av_log(NULL, AV_LOG_INFO, " (still image)");
+    */
     av_log(NULL, AV_LOG_INFO, "\n");
-
+    
+    /* SAGETV CUSTOMIZATION - This does seem to be present in the current version.  Parser would need to be updated */
+    
+    /*
     dump_metadata(NULL, st->metadata, "    ");
-
+    */
+    
     dump_sidedata(NULL, st, "    ");
 }
 
@@ -610,7 +619,9 @@ void av_dump_format(AVFormatContext *ic, int index,
            index,
            is_output ? ic->oformat->name : ic->iformat->name,
            is_output ? "to" : "from", url);
-    dump_metadata(NULL, ic->metadata, "  ");
+    
+    /* SAGETV CUSTOMIZATION - This does not see to be in the output in the current version*/
+    //dump_metadata(NULL, ic->metadata, "  ");
 
     if (!is_output) {
         av_log(NULL, AV_LOG_INFO, "  Duration: ");

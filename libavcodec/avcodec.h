@@ -3855,6 +3855,8 @@ attribute_deprecated
 size_t av_get_codec_tag_string(char *buf, size_t buf_size, unsigned int codec_tag);
 #endif
 
+void sagetv_avcodec_string(char *buf, int buf_size, AVCodecContext *enc, AVRational fps, int encode);
+
 void avcodec_string(char *buf, int buf_size, AVCodecContext *enc, int encode);
 
 /**
