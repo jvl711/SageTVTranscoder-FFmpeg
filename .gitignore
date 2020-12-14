@@ -38,6 +38,7 @@
 /mapfile
 /tools/python/__pycache__/
 SageTVTranscoder.log
+/output
 # External library Project Files #
 /x264
 /x265

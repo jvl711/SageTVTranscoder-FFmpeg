@@ -1,5 +1,6 @@
 #!/bin/sh
 
+#These are what I beleive are the package requirements
 #pacman -S cmake
 #pacman -S msys/make
 #pacman -S msys/autoconf
