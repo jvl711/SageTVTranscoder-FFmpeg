@@ -25,6 +25,210 @@
 #pacman -S mingw64/git
 #pacman -S mingw-w64-x86_64-libc++
 
+buildTarget="Winx64"
+
+#Get version number
+version=$( < SageTVTranscoderSettings)
+echo "Building SageTVTranscoder version: $version"
+
+
+if [ $2 = "Winx64" ]; then
+
+	buildTarget="Winx64"
+
+elif [ $2 = "Winx32" ]; then
+
+	buildTarget="Winx32"
+
+elif [ $2 = "linux" ]; then
+
+	buildTarget="linux"
+
+else
+
+	buildTarget="Winx64"
+
+fi
+
+echo "Setting build target to: " $buildTarget
+
+if [ $1 = "clean" ]; then
+	
+	echo "Cleaning files and liraries"
+
+	if [[ -d x264 ]]; then
+		echo "Removing x264 directory"
+		rm -Rf x264
+	fi
+	
+	if [[ -d output ]]; then
+		echo "Removing outout directory"
+		rm -Rf output
+	fi
+	
+	if [[ -d pkgconfig ]]; then
+		echo "Removing pkgconfig directory"
+		rm -Rf pkgconfig
+	fi
+	
+	rm SageTVTranscoder.log
+	
+	echo "Running ffmpeg clean"
+	make clean
+
+fi
+
+if [ $1 = "buildlibs" ] || [ $1 = "buildall" ]; then
+	
+	echo "Building liraries"
+
+	if [[ -d x264 ]]; then
+	    echo "x264 already exists..."
+		cd x264
+		git reset --hard
+		git checkout remotes/origin/stable
+	else
+		echo "x264 does not exist. Cloning library from videolan git"
+		git clone https://code.videolan.org/videolan/x264.git
+		cd x264
+		git checkout remotes/origin/stable
+	fi
+
+	if [ $buildTarget = "Winx32" ]; then
+	
+		echo "Configuring x264 library for Winx32"
+		./configure --host=mingw32 --enable-static --disable-cli --disable-opencl --enable-pic --prefix="../pkgconfig"
+		
+		if [ $? -eq 0 ]; then
+			echo "Configuring completed: " $?
+		else	
+			echo "Error configuring: " $?
+			exit
+		fi
+		
+	else
+	
+		echo "Configuring x264 library"
+		./configure --enable-static --disable-cli --disable-opencl --enable-pic --prefix="../pkgconfig/"
+		
+		if [ $? -eq 0 ]; then
+			echo "Configuring completed: " $?
+		else	
+			echo "Error configuring: " $?
+			exit
+		fi
+		
+	fi
+
+	echo "Running build of x264"
+	
+	make -j$(nproc)
+	
+	if [ $? -eq 0 ]; then
+		echo "Compiliing x264 completed: " $?
+	else	
+		echo "Error compiling: " $?
+		exit
+	fi
+	
+	echo "Installing x264"
+	
+	make install
+	
+	if [ $? -eq 0 ]; then
+		echo "Installing x264 completed: " $?
+	else	
+		echo "Error installing: " $?
+		exit
+	fi
+	
+	cd -
+
+fi
+
+
+if [ $1 = "build" ] || [ $1 = "buildall" ]; then
+
+	echo "Building SageTVTranscoder/FFmpeg"
+	
+	
+	if [ $buildTarget = "Winx32" ]; then
+	
+		echo "Configuring SageTVTranscoder/FFmpeg for Winx32"
+		./configure --enable-libx264 --disable-ffplay --disable-ffprobe --pkg-config-flags='--static' --enable-gpl --enable-static --disable-shared --disable-devices --disable-bzlib --disable-demuxer=msnwc_tcp --arch=x86 --target-os=mingw32 "--extra-cflags=-static -I./pkgconfig/include" "--extra-ldflags=-static -L./pkgconfig/lib"
+		
+		if [ $? -eq 0 ]; then
+			echo "Configuring completed: " $?
+		else	
+			echo "Error configuring: " $?
+			exit
+		fi
+		
+	else
+	
+		echo "Configuring SageTVTranscoder/FFmpeg"
+		./configure --enable-libx264 --disable-ffplay --disable-ffprobe --pkg-config-flags='--static' --enable-gpl --enable-static --disable-shared --disable-devices --disable-bzlib --disable-demuxer=msnwc_tcp "--extra-cflags=-static -I./pkgconfig/include" "--extra-ldflags=-static -L./pkgconfig/lib"
+		
+		if [ $? -eq 0 ]; then
+			echo "Configuring completed: " $?
+		else	
+			echo "Error configuring: " $?
+			exit
+		fi
+	
+	fi
+	
+	echo "Running build SageTVTranscoder/FFmpeg"
+	make -j$(nproc)
+	
+	if [ $? -eq 0 ]; then
+		echo "Compiliing SageTVTranscoder/FFmpeg completed: " $?
+	else	
+		echo "Error compiling: " $?
+		exit
+	fi
+fi
+
+
+if [ $1 = "build" ] || [ $1 = "buildall" ] || [ $1 = "package" ]; then
+
+	#Remove and create the directory to generate all of the output files
+	echo "Removing output directory"
+	rm -R output
+	mkdir -p output
+
+	
+	#Move and rename binary
+	cp ffmpeg.exe output/SageTVTranscoder.exe
+
+	zipFileName="SageTVTranscoder${buildTarget}_v${version}.zip"
+	echo "Archive name: $zipFileName"
+
+	echo "Creating zip archive"
+	#Create the zip archilve
+	cd output
+	zip -r $zipFileName SageTVTranscoder.exe
+	cd ..
+
+	echo "Generating md5sum"
+	#Create md5sum of SageTVTranscoder.exe
+	md5=$( md5sum -z output/$zipFileName | awk '{print $1}' )
+	echo "MD5 of the SageTVTranscoder: " $md5
+
+	#Create build date variable
+	builddate=$(date '+%Y.%m.%d')
+	echo "Builddate of the SageTVTranscoder: " $builddate
+
+	echo "Generating plugin file for SageTV Repository"
+	#Create file for SageTV plugin manager
+	cp -rf SageTVTranscoder$buildTarget.template output/SageTVTranscoder$buildTarget.xml
+	sed -i "s/@MD5@/$md5/g" output/SageTVTranscoder$buildTarget.xml
+	sed -i "s/@BUILDDATE@/$builddate/g" output/SageTVTranscoder$buildTarget.xml
+	sed -i "s/@VERSION@/$version/g" output/SageTVTranscoder$buildTarget.xml
+	sed -i "s/@ZIPFILENAME@/$zipFileName/g" output/SageTVTranscoder$buildTarget.xml
+
+fi
+
 #rm -R x264
 
 #if [[ -d x264 ]]; then
@@ -33,11 +237,12 @@
 #	echo "x264 does not exist. Cloning library from videolan git"
 #	git clone https://code.videolan.org/videolan/x264.git
 #	git checkout stable 
+#git checkout  remotes/origin/stable
 #fi
 
 #cd x264
 
-#./configure --enable-static --disable-cli --disable-opencl --enable-pic --prefix="x264"
+#./configure --enable-static --disable-cli --disable-opencl --enable-pic --prefix="../pkgconfig/"
 
 #make -j$(nproc)
 #make install 
@@ -89,9 +294,9 @@
 #CFLAGS=-I../pkgconfig/include
 #LDFLAGS=-L../pkgconfig/lib
 #export LD_LIBRARY_PATH=./pkgconfig/lib:./pkgconfig/lib/include
-export PKG_CONFIG_PATH=./pkgconfig/lib/pkgconfig 
+#export PKG_CONFIG_PATH=./pkgconfig/lib/pkgconfig 
 #export PKG_CONFIG_LIBDIR=./pkgconfig/lib/include
-./configure --disable-ffplay --disable-ffprobe --pkg-config-flags='--static' --enable-gpl --enable-static --disable-shared --disable-devices --disable-bzlib --disable-demuxer=msnwc_tcp --enable-libx264 "--extra-cflags=-static -I./pkgconfig/include" "--extra-ldflags=-static -L./pkgconfig/lib"
+#./configure --disable-ffplay --disable-ffprobe --pkg-config-flags='--static' --enable-gpl --enable-static --disable-shared --disable-devices --disable-bzlib --disable-demuxer=msnwc_tcp --enable-libx264 "--extra-cflags=-static -I./pkgconfig/include" "--extra-ldflags=-static -L./pkgconfig/lib"
 
 #make clean
 #make -j$(nproc)
