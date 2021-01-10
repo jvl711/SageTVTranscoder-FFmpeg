@@ -1181,7 +1181,8 @@ static int open_input_file(OptionsContext *o, const char *filename)
     //TODO: Do further investigation and evaluation if stv:// protocol is needed
     char tempfilename [1000];
     
-    if (strncmp("stv://localhost/", filename, 16) == 0)
+    if (strncmp("stv://localhost/", filename, 16) == 0 
+            || strncmp("stv://127.0.0.1/", filename, 16) == 0)
     {
         int pos = 0;
         
@@ -1196,8 +1197,6 @@ static int open_input_file(OptionsContext *o, const char *filename)
         
         filename = tempfilename;
     }
-    
-    
     
     /* open the input file with generic avformat function */
     err = avformat_open_input(&ic, filename, file_iformat, &o->g->format_opts);

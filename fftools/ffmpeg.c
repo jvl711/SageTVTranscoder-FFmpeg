@@ -5143,16 +5143,26 @@ void set_priority(const char *arg)
 
 int main(int argc, char **argv)
 {
+    //char directpred[13] = "-direct-pred\0";
     int i, ret;
     BenchmarkTimeStamps ti;
 
+    /*
+    for(i = 0; i < argc; i++)
+    {
+        if(strcmp(argv[i], "-directpred") == 0)
+        {            
+            argv[i] = directpred;
+        }
+    }
+    */
+    
     init_dynload();
 
     /* SAGETV CUSTOMIZTION */
     writelog("################################ SageTVTranscoder (FFmpeg) starting ################################\n");
     writelog("Arguments: ");
     
-    //TODO: Dump input arguments
     for(i = 0; i < argc; i++)
     {
         if(strlen(argv[i]) < 200)
@@ -5170,6 +5180,8 @@ int main(int argc, char **argv)
     }
     
     writelog("\n");
+    
+    
     
     register_exit(ffmpeg_cleanup);
 
