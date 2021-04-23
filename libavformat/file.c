@@ -28,6 +28,7 @@
 #include "libavutil/internal.h"
 #include "libavutil/opt.h"
 #include "avformat.h"
+#include "fftools/ffmpeg.h"
 #if HAVE_DIRENT_H
 #include <dirent.h>
 #endif
@@ -131,16 +132,19 @@ static int file_read(URLContext *h, unsigned char *buf, int size)
 {
     FileContext *c = h->priv_data;
     
-    
     int ret;
+    int maxWait = 3000000; 
+    int timeWaited = 0;
+    
     size = FFMIN(size, c->blocksize);
+    
     
     do
     {
     
         ret = read(c->fd, buf, size);
     
-        if (ret <= 0 && ((h->flags & URL_ACTIVEFILE) == URL_ACTIVEFILE))
+        if (ret <= 0 && ((h->flags & URL_ACTIVEFILE) == URL_ACTIVEFILE) && timeWaited < maxWait)
         {
 #ifdef __MINGW32__
             usleep(20000);
@@ -150,6 +154,8 @@ static int file_read(URLContext *h, unsigned char *buf, int size)
             ts.tv_nsec = 20000000;
             nanosleep(&ts, NULL);
 #endif
+            global_read_key();
+            timeWaited += 20000;
         }
         else
         {

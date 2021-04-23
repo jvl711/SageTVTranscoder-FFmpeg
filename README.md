@@ -1,5 +1,20 @@
-FFmpeg README
+SageTVTranscoder README
 =============
+
+This is a fork of the FFmpeg project to support some specific needs of SageTV. 
+Most of those needs are surrounding supporting the transcoding of livetv streams,
+and changing the bitrate of the transcode dynamically during realtime streaming.
+This is released as a plugin to SageTV, and replaces the original SageTVTranscoder
+when the plugin installs
+
+Link to SageTV Forum for the plugin: [https://forums.sagetv.com/forums/showthread.php?t=66607](https://forums.sagetv.com/forums/showthread.php?t=66607)
+
+***Note: Original FFmpeg documentation starts below***
+
+***
+
+FFmpeg README
+---------------
 
 FFmpeg is a collection of libraries and tools to process multimedia content
 such as audio, video, subtitles and related metadata.

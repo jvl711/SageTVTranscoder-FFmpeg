@@ -681,7 +681,7 @@ int hwaccel_decode_init(AVCodecContext *avctx);
 #ifdef __MINGW32__
 extern void set_priority(const char *arg);
 #endif
-
+void global_read_key(void);
 extern void writelog(const char *text);
 void closelog(void);
 /* END SAGETV CUSTOMIZTION */

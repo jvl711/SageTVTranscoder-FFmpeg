@@ -1220,7 +1220,7 @@ static int open_input_file(OptionsContext *o, const char *filename)
     /* SAGETV CUSTOMIZATIONS */
     if (active_file)
     {
-    ((URLContext *)ic->pb->opaque)->flags |= URL_ACTIVEFILE;
+        ((URLContext *)ic->pb->opaque)->flags |= URL_ACTIVEFILE;
         //uc->flags|=URL_ACTIVEFILE;
     }
     /* END SAGETV CUSTOMIZATIONS */

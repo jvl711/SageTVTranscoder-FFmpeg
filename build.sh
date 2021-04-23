@@ -25,28 +25,44 @@
 #pacman -S mingw64/git
 #pacman -S mingw-w64-x86_64-libc++
 
-buildTarget="Winx64"
+
 
 #Get version number
 version=$( < SageTVTranscoderSettings)
 echo "Building SageTVTranscoder version: $version"
 
 
-if [ $2 = "Winx64" ]; then
+if [ -z "$1" ]; then
 
-	buildTarget="Winx64"
+    echo "Action was not provided and is required build.sh [build, buildall, buildlibs, rebuild] [Winx64, Winx32]"
+    exit
 
-elif [ $2 = "Winx32" ]; then
+fi
 
-	buildTarget="Winx32"
+if [ -z "$2" ]; then
 
-elif [ $2 = "linux" ]; then
-
-	buildTarget="linux"
+    echo "Building target was not provided"
+    buildTarget="Winx64"
 
 else
 
-	buildTarget="Winx64"
+    if [ $2 = "Winx64" ]; then
+
+            buildTarget="Winx64"
+
+    elif [ $2 = "Winx32" ]; then
+
+            buildTarget="Winx32"
+
+    elif [ $2 = "linux" ]; then
+
+            buildTarget="linux"
+
+    else
+
+            buildTarget="Winx64"
+
+    fi
 
 fi
 
@@ -54,27 +70,27 @@ echo "Setting build target to: " $buildTarget
 
 if [ $1 = "clean" ]; then
 	
-	echo "Cleaning files and liraries"
+    echo "Cleaning files and liraries"
 
-	if [[ -d x264 ]]; then
-		echo "Removing x264 directory"
-		rm -Rf x264
-	fi
-	
-	if [[ -d output ]]; then
-		echo "Removing outout directory"
-		rm -Rf output
-	fi
-	
-	if [[ -d pkgconfig ]]; then
-		echo "Removing pkgconfig directory"
-		rm -Rf pkgconfig
-	fi
-	
-	rm SageTVTranscoder.log
-	
-	echo "Running ffmpeg clean"
-	make clean
+    if [[ -d x264 ]]; then
+            echo "Removing x264 directory"
+            rm -Rf x264
+    fi
+
+    if [[ -d output ]]; then
+            echo "Removing outout directory"
+            rm -Rf output
+    fi
+
+    if [[ -d pkgconfig ]]; then
+            echo "Removing pkgconfig directory"
+            rm -Rf pkgconfig
+    fi
+
+    rm SageTVTranscoder.log
+
+    echo "Running ffmpeg clean"
+    make clean
 
 fi
 
@@ -149,7 +165,7 @@ fi
 
 if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 
-	echo "Building SageTVTranscoder/FFmpeg"
+	echo "Configuring build for SageTVTranscoder/FFmpeg"
 	
 	
 	if [ $buildTarget = "Winx32" ]; then
@@ -178,19 +194,25 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 	
 	fi
 	
-	echo "Running build SageTVTranscoder/FFmpeg"
-	make -j$(nproc)
 	
-	if [ $? -eq 0 ]; then
-		echo "Compiliing SageTVTranscoder/FFmpeg completed: " $?
-	else	
-		echo "Error compiling: " $?
-		exit
-	fi
 fi
 
+if [ $1 = "build" ] || [ $1 = "buildall" ] || [ $1 = "rebuild" ]; then
 
-if [ $1 = "build" ] || [ $1 = "buildall" ] || [ $1 = "package" ]; then
+    echo "Running build SageTVTranscoder/FFmpeg"
+
+    make -j$(nproc)
+
+    if [ $? -eq 0 ]; then
+            echo "Compiliing SageTVTranscoder/FFmpeg completed: " $?
+    else	
+            echo "Error compiling: " $?
+            exit
+    fi
+
+fi
+
+if [ $1 = "build" ] || [ $1 = "buildall" ] || [ $1 = "package" ] || [ $1 = "rebuild" ]; then
 
 	#Remove and create the directory to generate all of the output files
 	echo "Removing output directory"

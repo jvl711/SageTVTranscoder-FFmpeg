@@ -624,12 +624,42 @@ static int read_key(void)
     int currCmdLen;
 	
     HANDLE mystdin = GetStdHandle(STD_INPUT_HANDLE);
-	
-    if(!PeekNamedPipe(mystdin, NULL, 1, &retval, NULL, NULL) || !retval)
+    
+    if(INVALID_HANDLE_VALUE == mystdin)
     {
+        writelog("Error getting stdin handle.  Returning -1\n");
+        
+        DWORD errorCode;
+        char buffer[255];
+        
+        errorCode = GetLastError();
+        
+        sprintf(buffer, "\tLastError: %d\n", errorCode);
+        writelog(buffer);
+    }
+    
+    
+	
+    if(!PeekNamedPipe(mystdin, NULL, 0, NULL, &retval, NULL))
+    {
+        writelog("Peek on Named Pipe failed.  Returning -1\n");
+        
+        DWORD errorCode;
+        char buffer[255];
+        
+        errorCode = GetLastError();
+        
+        sprintf(buffer, "\tLastError: %d\n", errorCode);
+        writelog(buffer);
+        
 	return -1;
     }
 
+    if(!retval)
+    {
+        return -1;
+    }
+    
     if (stdin_ctrl)
     {
         if (cmdReadBufPos >= CMD_READ_BUF_SIZE)
@@ -640,6 +670,7 @@ static int read_key(void)
 	
         if (!ReadFile(mystdin, &(cmdReadBuf[cmdReadBufPos]), CMD_READ_BUF_SIZE - cmdReadBufPos, &retval, NULL))
         {
+            writelog("Reading stdin failed\n");
             return -1;
         }       
 		
@@ -730,6 +761,7 @@ static int read_key(void)
             }
         }
         
+        writelog("Exiting the stdin loop for some reason.  Returning -1\n");
         return -1;
     }
     else
@@ -5110,6 +5142,11 @@ void writelog(const char *text)
     fprintf(sagelogfile, "%s", text);
     
     fflush(sagelogfile);
+}
+
+void global_read_key()
+{
+    int read_key();
 }
 
 void closelog()
