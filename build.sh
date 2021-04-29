@@ -77,6 +77,11 @@ if [ $1 = "clean" ]; then
             rm -Rf x264
     fi
 
+    if [[ -d x265 ]]; then
+            echo "Removing x265 directory"
+            rm -Rf x265
+    fi
+
     if [[ -d output ]]; then
             echo "Removing outout directory"
             rm -Rf output
@@ -94,9 +99,53 @@ if [ $1 = "clean" ]; then
 
 fi
 
-if [ $1 = "buildlibs" ] || [ $1 = "buildall" ]; then
+if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx265" ]; then
+
+    echo "Building x265"
+
+    if [[ -d x265  ]]; then
+    echo "x265  already exists..."
+        cd x265 
+	git reset --hard
+	git checkout stable
+    else
+	echo "x265 does not exist. Cloning library from videolan git"
+	git clone https://github.com/videolan/x265.git
+	cd x265
+	git checkout stable
+    fi
+
+    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="../pkgconfig" -DENABLE_SHARED=OFF -DBUILD_SHARED_LIBS=OFF -DITK_DYNAMIC_LOADING=OFF -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++" -DCMAKE_CXX_COMPILER=g++ source
+
+    echo "Running build of x265"
+
+    make -j$(nproc)
 	
-	echo "Building liraries"
+    if [ $? -eq 0 ]; then
+            echo "Compiliing x265 completed: " $?
+    else	
+            echo "Error compiling: " $?
+            exit
+    fi
+
+    echo "Installing x265"
+
+    make install
+
+    if [ $? -eq 0 ]; then
+        echo "Installing x265 completed: " $?
+    else	
+        echo "Error installing: " $?
+        exit
+    fi
+
+    cd -
+
+fi
+
+if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx264" ]; then
+	
+	echo "Building x264"
 
 	if [[ -d x264 ]]; then
 	    echo "x264 already exists..."
@@ -167,11 +216,13 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 
 	echo "Configuring build for SageTVTranscoder/FFmpeg"
 	
-	
+        PKG_CONFIG_PATH=./pkgconfig/lib/pkgconfig
+
+
 	if [ $buildTarget = "Winx32" ]; then
 	
 		echo "Configuring SageTVTranscoder/FFmpeg for Winx32"
-		./configure --enable-libx264 --disable-ffplay --disable-ffprobe --pkg-config-flags='--static' --enable-gpl --enable-static --disable-shared --disable-devices --disable-bzlib --disable-demuxer=msnwc_tcp --arch=x86 --target-os=mingw32 "--extra-cflags=-static -I./pkgconfig/include" "--extra-ldflags=-static -L./pkgconfig/lib"
+		./configure --enable-libx264 --enable-libx265 --disable-ffplay --disable-ffprobe --pkg-config-flags='--static' --enable-gpl --enable-static --disable-shared --disable-devices --disable-bzlib --disable-demuxer=msnwc_tcp --arch=x86 --target-os=mingw32 "--extra-cflags=-static -I./pkgconfig/include -lstdc++ -lpthread" "--extra-ldflags=-static -L./pkgconfig/lib -static-libgcc -static-libstdc++"
 		
 		if [ $? -eq 0 ]; then
 			echo "Configuring completed: " $?
@@ -183,7 +234,7 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 	else
 	
 		echo "Configuring SageTVTranscoder/FFmpeg"
-		./configure --enable-libx264 --disable-ffplay --disable-ffprobe --pkg-config-flags='--static' --enable-gpl --enable-static --disable-shared --disable-devices --disable-bzlib --disable-demuxer=msnwc_tcp "--extra-cflags=-static -I./pkgconfig/include" "--extra-ldflags=-static -L./pkgconfig/lib"
+		./configure --enable-libx264 --enable-libx265 --disable-ffplay --disable-ffprobe --pkg-config-flags='--static' --enable-gpl --enable-static --disable-shared --disable-devices --disable-bzlib --disable-demuxer=msnwc_tcp "--extra-cflags=-static -I./pkgconfig/include" "--extra-ldflags=-static -L./pkgconfig/lib"
 		
 		if [ $? -eq 0 ]; then
 			echo "Configuring completed: " $?
@@ -222,14 +273,22 @@ if [ $1 = "build" ] || [ $1 = "buildall" ] || [ $1 = "package" ] || [ $1 = "rebu
 	
 	#Move and rename binary
 	cp ffmpeg.exe output/SageTVTranscoder.exe
-
+	
 	zipFileName="SageTVTranscoder${buildTarget}_v${version}.zip"
 	echo "Archive name: $zipFileName"
 
 	echo "Creating zip archive"
 	#Create the zip archilve
 	cd output
+	
 	zip -r $zipFileName SageTVTranscoder.exe
+	
+	#move required dll for 32bit build.  This is a work around for now
+	if [ $buildTarget = "Winx32" ]; then
+		cp ../libgcc_s_dw2-1.dll .
+		zip -ur $zipFileName libgcc_s_dw2-1.dll
+	fi
+	
 	cd ..
 
 	echo "Generating md5sum"
