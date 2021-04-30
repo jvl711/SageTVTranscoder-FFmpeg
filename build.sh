@@ -290,7 +290,17 @@ if [ $1 = "build" ] || [ $1 = "buildall" ] || [ $1 = "package" ] || [ $1 = "rebu
 	#move required dll for 32bit build.  This is a work around for now
 	if [ $buildTarget = "Winx32" ]; then
 		cp ../libgcc_s_dw2-1.dll.dep libgcc_s_dw2-1.dll
+		cp ../libwinpthread-1.dll.32.dep libwinpthread-1.dll
 		zip -ur $zipFileName libgcc_s_dw2-1.dll
+		zip -ur $zipFileName libwinpthread-1.dll
+	fi
+	
+	#move required dll for 32bit build.  This is a work around for now
+	if [ $buildTarget = "Winx64" ]; then
+		cp ../libgcc_s_seh-1.dll.dep libgcc_s_seh-1.dll
+		cp ../libwinpthread-1.dll.64.dep libwinpthread-1.dll
+		zip -ur $zipFileName libgcc_s_seh-1.dll
+		zip -ur $zipFileName libwinpthread-1.dll
 	fi
 	
 	cd ..
