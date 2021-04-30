@@ -214,6 +214,10 @@ fi
 
 if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 
+	echo "Updating ffversion.h with current build version"
+	cp -rf ffversion.h.template libavutil/ffversion.h
+	sed -i "s/@VERSION@/$version/g" libavutil/ffversion.h
+	
 	echo "Configuring build for SageTVTranscoder/FFmpeg"
 	
         PKG_CONFIG_PATH=./pkgconfig/lib/pkgconfig

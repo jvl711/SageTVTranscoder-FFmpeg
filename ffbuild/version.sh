@@ -2,6 +2,9 @@
 
 # Usage: version.sh <ffmpeg-root-dir> <output-version.h> <extra-version>
 
+#SageTVTanscoder Modification.  I am handling versions from within my buildscript.
+exit 0
+
 # check for git short hash
 if ! test "$revision"; then
     if (cd "$1" && grep git RELEASE 2> /dev/null >/dev/null) ; then
