@@ -132,48 +132,52 @@ fi
 
 if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx265" ]; then
 
-    echo "Building x265"
+    if [ $buildTarget = "Winx32" ] || [ $buildTarget = "Winx64" ]; then
 
-    if [ -d x265  ]; then
-        echo "x265  already exists..."
-        cd x265 
-	git reset --hard
-	git checkout Release_3.4
-    else
-	echo "x265 does not exist. Cloning library from videolan git"
-	#git clone https://github.com/videolan/x265.git
-        git clone https://bitbucket.org/multicoreware/x265_git
-        mv x265_git x265
-	cd x265
-	git checkout Release_3.4
+	    echo "Building x265"
+
+			if [ -d x265  ]; then
+			echo "x265  already exists..."
+			cd x265 
+			git reset --hard
+			git checkout Release_3.4
+			else
+			echo "x265 does not exist. Cloning library from videolan git"
+			#git clone https://github.com/videolan/x265.git
+			git clone https://bitbucket.org/multicoreware/x265_git
+			mv x265_git x265
+			cd x265
+			git checkout Release_3.4
+			fi
+
+			#cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="../pkgconfig" -DENABLE_SHARED=OFF -DBUILD_SHARED_LIBS=OFF -DITK_DYNAMIC_LOADING=OFF -DCMAKE_EXE_LINKER_FLAGS="-static" -DCMAKE_CXX_COMPILER=g++ source
+			cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="../pkgconfig" -DENABLE_SHARED=OFF source
+
+			echo "Running build of x265"
+
+			make -j$(nproc)
+			
+			if [ $? -eq 0 ]; then
+				echo "Compiliing x265 completed: " $?
+			else	
+				echo "Error compiling: " $?
+				exit
+			fi
+
+			echo "Installing x265"
+
+			make install
+
+			if [ $? -eq 0 ]; then
+			echo "Installing x265 completed: " $?
+			else	
+			echo "Error installing: " $?
+			exit
+			fi
+
+	    cd -
+
     fi
-
-    #cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="../pkgconfig" -DENABLE_SHARED=OFF -DBUILD_SHARED_LIBS=OFF -DITK_DYNAMIC_LOADING=OFF -DCMAKE_EXE_LINKER_FLAGS="-static" -DCMAKE_CXX_COMPILER=g++ source
-    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="../pkgconfig" -DENABLE_SHARED=OFF source
-
-    echo "Running build of x265"
-
-    make -j$(nproc)
-	
-    if [ $? -eq 0 ]; then
-            echo "Compiliing x265 completed: " $?
-    else	
-            echo "Error compiling: " $?
-            exit
-    fi
-
-    echo "Installing x265"
-
-    make install
-
-    if [ $? -eq 0 ]; then
-        echo "Installing x265 completed: " $?
-    else	
-        echo "Error installing: " $?
-        exit
-    fi
-
-    cd -
 
 fi
 
