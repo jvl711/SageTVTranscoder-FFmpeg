@@ -1,6 +1,36 @@
 #!/bin/sh
 
-#These are what I beleive are the package requirements
+#Install prereqs to build linux variant
+#sudo apt-get update -qq && sudo apt-get -y install \
+#  autoconf \
+#  automake \
+#  build-essential \
+#  cmake \
+#  git-core \
+#  libass-dev \
+#  libfreetype6-dev \
+#  libgnutls28-dev \
+#  libsdl2-dev \
+#  libtool \
+#  libva-dev \
+#  libvdpau-dev \
+#  libvorbis-dev \
+#  libxcb1-dev \
+#  libxcb-shm0-dev \
+#  libxcb-xfixes0-dev \
+#  meson \
+#  ninja-build \
+#  pkg-config \
+#  texinfo \
+#  wget \
+#  yasm \
+#  zlib1g-dev \
+#  zip
+#
+# Maybe: sudo apt-get install libnuma-dev
+
+
+#These are what I believe are the package requirements
 #pacman -S cmake
 #pacman -S msys/make
 #pacman -S msys/autoconf
@@ -28,7 +58,8 @@
 
 
 #Get version number
-version=$( < SageTVTranscoderSettings)
+#version=$(<SageTVTranscoderSettings)
+version=`cat SageTVTranscoderSettings`
 echo "Building SageTVTranscoder version: $version"
 
 
@@ -54,9 +85,9 @@ else
 
             buildTarget="Winx32"
 
-    elif [ $2 = "linux" ]; then
+    elif [ $2 = "Linux" ]; then
 
-            buildTarget="linux"
+            buildTarget="Linux"
 
     else
 
@@ -72,22 +103,22 @@ if [ $1 = "clean" ]; then
 	
     echo "Cleaning files and liraries"
 
-    if [[ -d x264 ]]; then
+    if [ -d x264 ]; then
             echo "Removing x264 directory"
             rm -Rf x264
     fi
 
-    if [[ -d x265 ]]; then
+    if [ -d x265 ]; then
             echo "Removing x265 directory"
             rm -Rf x265
     fi
 
-    if [[ -d output ]]; then
+    if [ -d output ]; then
             echo "Removing outout directory"
             rm -Rf output
     fi
 
-    if [[ -d pkgconfig ]]; then
+    if [ -d pkgconfig ]; then
             echo "Removing pkgconfig directory"
             rm -Rf pkgconfig
     fi
@@ -103,19 +134,22 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx265" ]; then
 
     echo "Building x265"
 
-    if [[ -d x265  ]]; then
-    echo "x265  already exists..."
+    if [ -d x265  ]; then
+        echo "x265  already exists..."
         cd x265 
 	git reset --hard
-	git checkout stable
+	git checkout Release_3.4
     else
 	echo "x265 does not exist. Cloning library from videolan git"
-	git clone https://github.com/videolan/x265.git
+	#git clone https://github.com/videolan/x265.git
+        git clone https://bitbucket.org/multicoreware/x265_git
+        mv x265_git x265
 	cd x265
-	git checkout stable
+	git checkout Release_3.4
     fi
 
-    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="../pkgconfig" -DENABLE_SHARED=OFF -DBUILD_SHARED_LIBS=OFF -DITK_DYNAMIC_LOADING=OFF -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++" -DCMAKE_CXX_COMPILER=g++ source
+    #cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="../pkgconfig" -DENABLE_SHARED=OFF -DBUILD_SHARED_LIBS=OFF -DITK_DYNAMIC_LOADING=OFF -DCMAKE_EXE_LINKER_FLAGS="-static" -DCMAKE_CXX_COMPILER=g++ source
+    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="../pkgconfig" -DENABLE_SHARED=OFF source
 
     echo "Running build of x265"
 
@@ -147,7 +181,7 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx264" ]; then
 	
 	echo "Building x264"
 
-	if [[ -d x264 ]]; then
+	if [ -d x264 ]; then
 	    echo "x264 already exists..."
 		cd x264
 		git reset --hard
@@ -220,7 +254,9 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 	
 	echo "Configuring build for SageTVTranscoder/FFmpeg"
 	
-        PKG_CONFIG_PATH=./pkgconfig/lib/pkgconfig
+        export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:./pkgconfig/lib/pkgconfig:./pkgconfig/lib:/usr/local/lib/pkgconfig
+        echo PKG_CONFIG_PATH=$PKG_CONFIG_PATH
+        #export PKG_CONFIG_PATH=$./pkgconfig/lib/pkgconfig
 
 
 	if [ $buildTarget = "Winx32" ]; then
@@ -234,10 +270,23 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 			echo "Error configuring: " $?
 			exit
 		fi
+
+	elif [ $buildTarget = "Linux" ]; then
+
+		echo "Configuring SageTVTranscoder/FFmpeg (Linux)"
+		#x265 not working.  Need to investigate further
+		./configure --enable-libx264 --disable-ffplay --disable-ffprobe --prefix="./pkgconfig" --pkgconfigdir='./pkgconfig/lib/pkgconfig' --pkg-config-flags='--static' --enable-gpl --enable-static --disable-shared --disable-devices --disable-bzlib --disable-demuxer=msnwc_tcp --extra-libs="-lpthread -lm" --ld="g++" --enable-nonfree "--extra-cflags=-static -I./pkgconfig/include" "--extra-ldflags=-static -L./pkgconfig/lib"
+		
+		if [ $? -eq 0 ]; then
+			echo "Configuring completed: " $?
+		else	
+			echo "Error configuring: " $?
+			exit
+		fi
 		
 	else
 	
-		echo "Configuring SageTVTranscoder/FFmpeg"
+		echo "Configuring SageTVTranscoder/FFmpeg (Winx64)"
 		./configure --enable-libx264 --enable-libx265 --disable-ffplay --disable-ffprobe --pkg-config-flags='--static' --enable-gpl --enable-static --disable-shared --disable-devices --disable-bzlib --disable-demuxer=msnwc_tcp "--extra-cflags=-static -I./pkgconfig/include" "--extra-ldflags=-static -L./pkgconfig/lib"
 		
 		if [ $? -eq 0 ]; then
@@ -275,52 +324,89 @@ if [ $1 = "build" ] || [ $1 = "buildall" ] || [ $1 = "package" ] || [ $1 = "rebu
 	mkdir -p output
 
 	
-	#Move and rename binary
-	cp ffmpeg.exe output/SageTVTranscoder.exe
-	
-	zipFileName="SageTVTranscoder${buildTarget}_v${version}.zip"
-	echo "Archive name: $zipFileName"
+        if [ $buildTarget = "Winx32" ] || [ $buildTarget = "Winx64" ]; then
 
-	echo "Creating zip archive"
-	#Create the zip archilve
-	cd output
-	
-	zip -r $zipFileName SageTVTranscoder.exe
-	
-	#move required dll for 32bit build.  This is a work around for now
-	if [ $buildTarget = "Winx32" ]; then
-		cp ../libgcc_s_dw2-1.dll.dep libgcc_s_dw2-1.dll
-		cp ../libwinpthread-1.dll.32.dep libwinpthread-1.dll
-		zip -ur $zipFileName libgcc_s_dw2-1.dll
-		zip -ur $zipFileName libwinpthread-1.dll
-	fi
-	
-	#move required dll for 32bit build.  This is a work around for now
-	if [ $buildTarget = "Winx64" ]; then
-		cp ../libgcc_s_seh-1.dll.dep libgcc_s_seh-1.dll
-		cp ../libwinpthread-1.dll.64.dep libwinpthread-1.dll
-		zip -ur $zipFileName libgcc_s_seh-1.dll
-		zip -ur $zipFileName libwinpthread-1.dll
-	fi
-	
-	cd ..
+            #Move and rename binary
+            cp ffmpeg.exe output/SageTVTranscoder.exe
 
-	echo "Generating md5sum"
-	#Create md5sum of SageTVTranscoder.exe
-	md5=$( md5sum -z output/$zipFileName | awk '{print $1}' )
-	echo "MD5 of the SageTVTranscoder: " $md5
+            zipFileName="SageTVTranscoder${buildTarget}_v${version}.zip"
+            echo "Archive name: $zipFileName"
 
-	#Create build date variable
-	builddate=$(date '+%Y.%m.%d')
-	echo "Builddate of the SageTVTranscoder: " $builddate
+            echo "Creating zip archive"
+            #Create the zip archilve
+            cd output
 
-	echo "Generating plugin file for SageTV Repository"
-	#Create file for SageTV plugin manager
-	cp -rf SageTVTranscoder$buildTarget.template output/SageTVTranscoder$buildTarget.xml
-	sed -i "s/@MD5@/$md5/g" output/SageTVTranscoder$buildTarget.xml
-	sed -i "s/@BUILDDATE@/$builddate/g" output/SageTVTranscoder$buildTarget.xml
-	sed -i "s/@VERSION@/$version/g" output/SageTVTranscoder$buildTarget.xml
-	sed -i "s/@ZIPFILENAME@/$zipFileName/g" output/SageTVTranscoder$buildTarget.xml
+            zip -r $zipFileName SageTVTranscoder.exe
+
+            #move required dll for 32bit build.  This is a work around for now
+            if [ $buildTarget = "Winx32" ]; then
+                    cp ../libgcc_s_dw2-1.dll.dep libgcc_s_dw2-1.dll
+                    cp ../libwinpthread-1.dll.32.dep libwinpthread-1.dll
+                    zip -ur $zipFileName libgcc_s_dw2-1.dll
+                    zip -ur $zipFileName libwinpthread-1.dll
+            fi
+
+            #move required dll for 32bit build.  This is a work around for now
+            if [ $buildTarget = "Winx64" ]; then
+                    cp ../libgcc_s_seh-1.dll.dep libgcc_s_seh-1.dll
+                    cp ../libwinpthread-1.dll.64.dep libwinpthread-1.dll
+                    zip -ur $zipFileName libgcc_s_seh-1.dll
+                    zip -ur $zipFileName libwinpthread-1.dll
+            fi
+
+            cd ..
+
+            echo "Generating md5sum"
+            #Create md5sum of SageTVTranscoder.exe
+            md5=$( md5sum -z output/$zipFileName | awk '{print $1}' )
+            echo "MD5 of the SageTVTranscoder: " $md5
+
+            #Create build date variable
+            builddate=$(date '+%Y.%m.%d')
+            echo "Builddate of the SageTVTranscoder: " $builddate
+
+            echo "Generating plugin file for SageTV Repository"
+            #Create file for SageTV plugin manager
+            cp -rf SageTVTranscoder$buildTarget.template output/SageTVTranscoder$buildTarget.xml
+            sed -i "s/@MD5@/$md5/g" output/SageTVTranscoder$buildTarget.xml
+            sed -i "s/@BUILDDATE@/$builddate/g" output/SageTVTranscoder$buildTarget.xml
+            sed -i "s/@VERSION@/$version/g" output/SageTVTranscoder$buildTarget.xml
+            sed -i "s/@ZIPFILENAME@/$zipFileName/g" output/SageTVTranscoder$buildTarget.xml
+        
+        else
+
+            #Move and rename binary
+            cp ffmpeg output/ffmpeg
+
+            zipFileName="SageTVTranscoder${buildTarget}_v${version}.zip"
+            echo "Archive name: $zipFileName"
+
+            echo "Creating zip archive"
+            #Create the zip archilve
+            cd output
+
+            zip -r $zipFileName ffmpeg
+
+            cd ..
+
+            echo "Generating md5sum"
+            #Create md5sum of SageTVTranscoder.exe
+            md5=$( md5sum -z output/$zipFileName | awk '{print $1}' )
+            echo "MD5 of the SageTVTranscoder: " $md5
+
+            #Create build date variable
+            builddate=$(date '+%Y.%m.%d')
+            echo "Builddate of the SageTVTranscoder: " $builddate
+
+            echo "Generating plugin file for SageTV Repository"
+            #Create file for SageTV plugin manager
+            cp -rf SageTVTranscoder$buildTarget.template output/SageTVTranscoder$buildTarget.xml
+            sed -i "s/@MD5@/$md5/g" output/SageTVTranscoder$buildTarget.xml
+            sed -i "s/@BUILDDATE@/$builddate/g" output/SageTVTranscoder$buildTarget.xml
+            sed -i "s/@VERSION@/$version/g" output/SageTVTranscoder$buildTarget.xml
+            sed -i "s/@ZIPFILENAME@/$zipFileName/g" output/SageTVTranscoder$buildTarget.xml
+
+        fi
 
 fi
 

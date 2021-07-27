@@ -535,35 +535,49 @@ static int read_key(void)
 				// We've got a command in the buffer, see what it is and deal with it
 				if (strstr(cmdReadBuf, "inactivefile") == cmdReadBuf)
 				{
-					if (active_file)
-					{
-						int i;
-						active_file = 0;
-						// Inactive file command received, update us accordingly.
-						for (i = 0; i < nb_input_files; i++)
-						{
-							URLContext *uc = input_files[i]->pb->opaque;
-							uc->flags&=~URL_ACTIVEFILE;
-						}
-						fprintf(stderr, "Inactive file message has been processed\n");
-					}
+                                    writelog("STDIN inactivefile called by server\n");
+                                    if (active_file)
+                                    {
+                                        int i;
+                                        active_file = 0;
+
+                                        // Inactive file command received, update us accordingly.
+                                        for (i = 0; i < nb_input_files; i++)
+                                        {
+
+                                            ((URLContext *)input_files[i]->ctx->pb->opaque)->flags =~URL_ACTIVEFILE;
+                                            //uc->flags&=~URL_ACTIVEFILE;
+                                        }
+
+                                        fprintf(stderr, "Inactive file message has been processed\n");
+                                    }
 				}
 				else if (strstr(cmdReadBuf, "videorateadapt") == cmdReadBuf)
 				{
-					// Parse the amount we want to adjust the video bitrate by
-					int videoRateAdjust = atoi(cmdReadBuf + strlen("videorateadapt") + 1) * 1000;
-					//fprintf(stderr, "Got video rate adjustment of %d\n", videoRateAdjust);
-					int i, j;
-					for(i=0;i<nb_output_files;i++)
-					{
-						AVFormatContext *avctx = output_files[i]->ctx;
-						for (j = 0; j < avctx->nb_streams; j++)
-						{
-							AVStream *st = avctx->streams[j];
-							if(st->codec->codec_type == CODEC_TYPE_VIDEO)
-							st->codec->bit_rate = st->codec->bit_rate + videoRateAdjust;
-						}
-					}
+                                    // Parse the amount we want to adjust the video bitrate by
+                                    int videoRateAdjust = atoi(cmdReadBuf + strlen("videorateadapt") + 1) * 1000;
+
+                                    //fprintf(stderr, "Got video rate adjustment of %d\n", videoRateAdjust);
+                                    int i, j;
+                                    char buffer[255];
+
+
+                                    AVFormatContext *avctx = output_files[i]->ctx;
+                                    for (j = 0; j < avctx->nb_streams; j++)
+                                    {
+                                        AVStream *st = avctx->streams[j];
+
+                                        if(st->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+                                        {
+                                            sprintf(buffer, "\tCurrent Bitrate: %" PRId64 "\n", st->codec->bit_rate);
+                                            writelog(buffer);
+                                            //list->codec->bit_rate = st->codec->bit_rate + videoRateAdjust;
+                                            st->codec->bit_rate = st->codec->bit_rate + videoRateAdjust;
+
+                                            //st->codecpar->bit_rate =  st->codecpar->bit_rate + videoRateAdjust;
+                                        }
+
+                                    }
 				}
 				*eolPos = 0;
 				currCmdLen = strlen(cmdReadBuf) + 1;

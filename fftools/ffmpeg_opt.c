@@ -623,10 +623,12 @@ static void parse_meta_type(char *arg, char *type, int *index, const char **stre
 }
 
 /* SAGETV CUSTOMIZATION */
+#ifdef __MINGW32__
 static void opt_priority(void *optctx, const char *opt, const char *arg)
 {
     set_priority(arg);
 }
+#endif
 /* END SAGETV CUSTOMIZATION */
 
 static int copy_metadata(char *outspec, char *inspec, AVFormatContext *oc, AVFormatContext *ic, OptionsContext *o)
