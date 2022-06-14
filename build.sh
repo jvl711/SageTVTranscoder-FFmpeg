@@ -62,6 +62,20 @@
 version=`cat SageTVTranscoderSettings`
 echo "Building SageTVTranscoder version: $version"
 
+#Cross compiler gcc-mingw-w64-i686, sudo apt-get install mingw-w64-tools
+
+    #export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:./pkgconfig/lib/pkgconfig:./pkgconfig/lib:/usr/local/lib/pkgconfig
+    #echo PKG_CONFIG_PATH=$PKG_CONFIG_PATH
+
+	#echo "Updating ffversion.h with current build version"
+	#cp -rf ffversion.h.template libavutil/ffversion.h
+	#sed -i "s/@VERSION@/$version/g" libavutil/ffversion.h
+
+	#./configure --arch=x86 --target-os=mingw32 --cross-prefix=i686-w64-mingw32-
+	#./configure --disable-ffplay --disable-ffprobe --pkg-config-flags='--static' --enable-gpl --enable-static --disable-shared --disable-devices --disable-bzlib --disable-demuxer=msnwc_tcp --arch=x86 --target-os=mingw32 --cross-prefix=i686-w64-mingw32- "--extra-cflags=-static -I./pkgconfig/include -lstdc++ -lpthread" "--extra-ldflags=-static -L./pkgconfig/lib -static-libgcc -static-libstdc++"
+	#make
+
+    #exit
 
 if [ -z "$1" ]; then
 
@@ -147,11 +161,25 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx265" ]; then
 			git clone https://bitbucket.org/multicoreware/x265_git
 			mv x265_git x265
 			cd x265
-			git checkout Release_3.4
+			git checkout Release_3.5
 			fi
 
 			#cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="../pkgconfig" -DENABLE_SHARED=OFF -DBUILD_SHARED_LIBS=OFF -DITK_DYNAMIC_LOADING=OFF -DCMAKE_EXE_LINKER_FLAGS="-static" -DCMAKE_CXX_COMPILER=g++ source
-			cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="../pkgconfig" -DENABLE_SHARED=OFF source
+			#cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="../pkgconfig" -DENABLE_SHARED=OFF source
+			cmake -DWIN32=1 \
+			-DCMAKE_SYSTEM_NAME=Windows \
+			-D CMAKE_SYSTEM_PROCESSOR="x86" \
+			-DDLLTOOL=686-w64-mingw32-dlltool \
+			-D CMAKE_RC_COMPILER="i686-w64-mingw32-windres" \
+			-D CMAKE_C_COMPILER="i686-w64-mingw32-gcc" \
+			-D CMAKE_CXX_COMPILER="i686-w64-mingw32-g++" \
+			-D CMAKE_INSTALL_PREFIX="../pkgconfig" \
+			-DCMAKE_EXE_LINKER_FLAGS="-static" \
+		    -DENABLE_SHARED=OFF source
+			#cmake -G "Unix Makefiles" \-DCMAKE_INSTALL_PREFIX="/usr/x86_64-w64-mingw32/sys-root/mingw" \
+			#-D CMAKE_INSTALL_PREFIX="../pkgconfig" \
+			#-DENABLE_SHARED=OFF -DCMAKE_EXE_LINKER_FLAGS="-static" source \
+			#-DCMAKE_TOOLCHAIN_FILE="../build/msys/toolchain-x86_64-w64-mingw32.cmake" &&
 
 			echo "Running build of x265"
 
@@ -200,8 +228,11 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx264" ]; then
 	if [ $buildTarget = "Winx32" ]; then
 	
 		echo "Configuring x264 library for Winx32"
-		./configure --host=mingw32 --enable-static --disable-cli --disable-opencl --enable-pic --prefix="../pkgconfig"
 		
+		#./configure --host=mingw32 --enable-static --disable-cli --disable-opencl --enable-pic --prefix="../pkgconfig"
+		#--arch=x86 --target-os=mingw32 --cross-prefix=i686-w64-mingw32-
+		./configure --host=mingw32 --cross-prefix=i686-w64-mingw32- --enable-static --disable-cli --disable-opencl --enable-pic --prefix="../pkgconfig"		
+
 		if [ $? -eq 0 ]; then
 			echo "Configuring completed: " $?
 		else	
@@ -258,16 +289,34 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 	
 	echo "Configuring build for SageTVTranscoder/FFmpeg"
 	
-        export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:./pkgconfig/lib/pkgconfig:./pkgconfig/lib:/usr/local/lib/pkgconfig
+        export PKG_CONFIG_PATH=./pkgconfig/lib:./pkgconfig/lib/pkgconfig
         echo PKG_CONFIG_PATH=$PKG_CONFIG_PATH
+	
         #export PKG_CONFIG_PATH=$./pkgconfig/lib/pkgconfig
 
 
 	if [ $buildTarget = "Winx32" ]; then
 	
 		echo "Configuring SageTVTranscoder/FFmpeg for Winx32"
-		./configure --enable-libx264 --enable-libx265 --disable-ffplay --disable-ffprobe --pkg-config-flags='--static' --enable-gpl --enable-static --disable-shared --disable-devices --disable-bzlib --disable-demuxer=msnwc_tcp --arch=x86 --target-os=mingw32 "--extra-cflags=-static -I./pkgconfig/include -lstdc++ -lpthread" "--extra-ldflags=-static -L./pkgconfig/lib -static-libgcc -static-libstdc++"
-		
+
+		./configure \
+		--arch=x86 \
+		--target-os=mingw32 \
+		--cross-prefix=i686-w64-mingw32- \
+		--enable-libx265 \
+		--enable-libx264 \
+		--disable-ffplay \
+		--disable-ffprobe \
+		--enable-gpl \
+		--enable-static \
+		--pkg-config="pkg-config --static" \
+		--disable-shared \
+		--disable-devices \
+		--disable-bzlib \
+		--disable-demuxer=msnwc_tcp \
+		--extra-cflags="-static -I./pkgconfig/include -lstdc++ -lpthread" \
+		--extra-ldflags="-static -L./pkgconfig/lib -static-libgcc -static-libstdc++"
+
 		if [ $? -eq 0 ]; then
 			echo "Configuring completed: " $?
 		else	
