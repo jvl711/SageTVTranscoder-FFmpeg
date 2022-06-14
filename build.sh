@@ -169,10 +169,10 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx265" ]; then
 			cmake -DWIN32=1 \
 			-DCMAKE_SYSTEM_NAME=Windows \
 			-D CMAKE_SYSTEM_PROCESSOR="x86" \
-			-DDLLTOOL=686-w64-mingw32-dlltool \
-			-D CMAKE_RC_COMPILER="i686-w64-mingw32-windres" \
-			-D CMAKE_C_COMPILER="i686-w64-mingw32-gcc" \
-			-D CMAKE_CXX_COMPILER="i686-w64-mingw32-g++" \
+			-DDLLTOOL="/usr/bin/i686-w64-mingw32-dlltool" \
+			-D CMAKE_RC_COMPILER="/usr/bin/i686-w64-mingw32-windres" \
+			-D CMAKE_C_COMPILER="/usr/bin/i686-w64-mingw32-gcc" \
+			-D CMAKE_CXX_COMPILER="/usr/bin/i686-w64-mingw32-g++" \
 			-D CMAKE_INSTALL_PREFIX="../pkgconfig" \
 			-DCMAKE_EXE_LINKER_FLAGS="-static" \
 		    -DENABLE_SHARED=OFF source
