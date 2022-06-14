@@ -164,22 +164,15 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx265" ]; then
 			git checkout Release_3.5
 			fi
 
-			#cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="../pkgconfig" -DENABLE_SHARED=OFF -DBUILD_SHARED_LIBS=OFF -DITK_DYNAMIC_LOADING=OFF -DCMAKE_EXE_LINKER_FLAGS="-static" -DCMAKE_CXX_COMPILER=g++ source
-			#cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="../pkgconfig" -DENABLE_SHARED=OFF source
 			cmake -DWIN32=1 \
 			-DCMAKE_SYSTEM_NAME=Windows \
 			-D CMAKE_SYSTEM_PROCESSOR="x86" \
-			-DDLLTOOL="/usr/bin/i686-w64-mingw32-dlltool" \
 			-D CMAKE_RC_COMPILER="/usr/bin/i686-w64-mingw32-windres" \
 			-D CMAKE_C_COMPILER="/usr/bin/i686-w64-mingw32-gcc" \
 			-D CMAKE_CXX_COMPILER="/usr/bin/i686-w64-mingw32-g++" \
 			-D CMAKE_INSTALL_PREFIX="../pkgconfig" \
 			-DCMAKE_EXE_LINKER_FLAGS="-static" \
 		    -DENABLE_SHARED=OFF source
-			#cmake -G "Unix Makefiles" \-DCMAKE_INSTALL_PREFIX="/usr/x86_64-w64-mingw32/sys-root/mingw" \
-			#-D CMAKE_INSTALL_PREFIX="../pkgconfig" \
-			#-DENABLE_SHARED=OFF -DCMAKE_EXE_LINKER_FLAGS="-static" source \
-			#-DCMAKE_TOOLCHAIN_FILE="../build/msys/toolchain-x86_64-w64-mingw32.cmake" &&
 
 			echo "Running build of x265"
 
