@@ -7,7 +7,7 @@ RUN apt-get update
 RUN apt-get install build-essential -y
 
 #MinGW for cross compiling
-RUN apt-get install gcc-mingw-w64-i686
+RUN apt-get install gcc-mingw-w64-i686 -y
 
 
 CMD ["/bin/bash"]
