@@ -30,7 +30,7 @@ pipeline
 		    {
 		        script
 		        {
-		            sh "./build.sh build Winx32"
+		            sh "./build.sh buildall Winx32"
 
 		            //archiveArtifacts artifacts: "android-tv/build/outputs/apk/${VARIANT}/android-tv-${VARIANT}.apk", onlyIfSuccessful: true
 		        }
