@@ -27,10 +27,11 @@ RUN apt-get install pkg-config -y
 RUN apt-get install texinfo -y
 RUN apt-get install wget -y
 RUN apt-get install yasm -y
+RUN apt-get install nasm -y
 RUN apt-get install zlib1g-dev -y
 
 #MinGW for cross compiling
-RUN apt-get install gcc-mingw-w64-i686 -y
-
+RUN apt-get install mingw-w64 -y
+#RUN apt-get install g++-mingw-w64-i686 -y
 
 CMD ["/bin/bash"]
