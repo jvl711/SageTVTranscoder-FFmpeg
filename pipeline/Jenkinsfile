@@ -55,7 +55,7 @@ pipeline
                     sh "./build.sh clean"
                     sh "./build.sh buildall Winx32"
 
-                    archiveArtifacts artifacts: "output/Winx32/SageTVTranscoderWinx32_${version}.zip", onlyIfSuccessful: true
+                    archiveArtifacts artifacts: "output/Winx32/SageTVTranscoderWinx32_v${version}.zip", onlyIfSuccessful: true
                 }
             }
         }
@@ -69,7 +69,7 @@ pipeline
                     sh "./build.sh clean"
                     sh "./build.sh buildall Winx64"
 
-                    archiveArtifacts artifacts: "output/Winx64/SageTVTranscoderWinx64_${version}.zip", onlyIfSuccessful: true
+                    archiveArtifacts artifacts: "output/Winx64/SageTVTranscoderWinx64_v${version}.zip", onlyIfSuccessful: true
                 }
             }
         }
@@ -83,7 +83,7 @@ pipeline
                     sh "./build.sh clean"
                     sh "./build.sh buildall Linux"
 
-                    archiveArtifacts artifacts: "output/Linux/SageTVTranscoderLinux_${version}.zip", onlyIfSuccessful: true
+                    archiveArtifacts artifacts: "output/Linux/SageTVTranscoderLinux_v${version}.zip", onlyIfSuccessful: true
                 }
             }
         }
