@@ -21,10 +21,35 @@ pipeline
         }
     }
 
+	environment
+    {
+        appName = 'SageTV Transcoder'
+
+        GIT_HUB_USER = credentials('GitHubUser')
+        GIT_HUB_TOKEN = credentials('GitHubToken')
+
+        version = sh (script: "./build.sh version", returnStdout: true).trim()
+    }
+
 	stages
 	{    
 
-		stage('Build Bundle')
+
+		stage('Set build informaction')
+        {
+            steps
+            {
+                script
+                {
+                    VARIANT = getBuildType()
+
+                    currentBuild.displayName = "${version}"
+                    currentBuild.description += "<B>Version:</B> ${version}<BR>\n"                }
+				}
+            }
+        }
+
+		stage('Build Windows x32')
 		{
 		    steps
 		    {
@@ -33,7 +58,35 @@ pipeline
 					sh "./build.sh clean"
 		            sh "./build.sh buildall Winx32"
 
-		            //archiveArtifacts artifacts: "android-tv/build/outputs/apk/${VARIANT}/android-tv-${VARIANT}.apk", onlyIfSuccessful: true
+		            archiveArtifacts artifacts: "output/Winx32/SageTVTranscoderWinx32_${version}.zip", onlyIfSuccessful: true
+		        }
+		    }
+		}
+
+		stage('Build Windows x64')
+		{
+		    steps
+		    {
+		        script
+		        {
+					sh "./build.sh clean"
+		            sh "./build.sh buildall Winx64"
+
+		            archiveArtifacts artifacts: "output/Winx64/SageTVTranscoderWinx64_${version}.zip", onlyIfSuccessful: true
+		        }
+		    }
+		}
+
+		stage('Build Linux')
+		{
+		    steps
+		    {
+		        script
+		        {
+					sh "./build.sh clean"
+		            sh "./build.sh buildall Linux"
+
+					archiveArtifacts artifacts: "output/Linux/SageTVTranscoderLinux_${version}.zip", onlyIfSuccessful: true
 		        }
 		    }
 		}
