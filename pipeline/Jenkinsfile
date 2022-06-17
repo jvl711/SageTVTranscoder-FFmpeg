@@ -41,8 +41,6 @@ pipeline
             {
                 script
                 {
-                    VARIANT = getBuildType()
-
                     currentBuild.displayName = "${version}"
                     currentBuild.description += "<B>Version:</B> ${version}<BR>\n"                }
 				}
