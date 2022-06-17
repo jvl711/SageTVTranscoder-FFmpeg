@@ -21,7 +21,7 @@ pipeline
         }
     }
 
-	environment
+    environment
     {
         appName = 'SageTV Transcoder'
 
@@ -31,62 +31,61 @@ pipeline
         version = sh (script: "./build.sh version", returnStdout: true).trim()
     }
 
-	stages
-	{    
+    stages
+    {    
 
-
-		stage('Set build informaction')
+        stage('Set build informaction')
         {
             steps
             {
                 script
                 {
                     currentBuild.displayName = "${version}"
-                    currentBuild.description += "<B>Version:</B> ${version}<BR>\n"                }
-				}
+                    currentBuild.description += "<B>Version:</B> ${version}<BR>\n"                
+                }
             }
         }
 
-		stage('Build Windows x32')
-		{
-		    steps
-		    {
-		        script
-		        {
-					sh "./build.sh clean"
-		            sh "./build.sh buildall Winx32"
+        stage('Build Windows x32')
+        {
+            steps
+            {
+                script
+                {
+                    sh "./build.sh clean"
+                    sh "./build.sh buildall Winx32"
 
-		            archiveArtifacts artifacts: "output/Winx32/SageTVTranscoderWinx32_${version}.zip", onlyIfSuccessful: true
-		        }
-		    }
-		}
+                    archiveArtifacts artifacts: "output/Winx32/SageTVTranscoderWinx32_${version}.zip", onlyIfSuccessful: true
+                }
+            }
+        }
 
-		stage('Build Windows x64')
-		{
-		    steps
-		    {
-		        script
-		        {
-					sh "./build.sh clean"
-		            sh "./build.sh buildall Winx64"
+        stage('Build Windows x64')
+        {
+            steps
+            {
+                script
+                {
+                    sh "./build.sh clean"
+                    sh "./build.sh buildall Winx64"
 
-		            archiveArtifacts artifacts: "output/Winx64/SageTVTranscoderWinx64_${version}.zip", onlyIfSuccessful: true
-		        }
-		    }
-		}
+                    archiveArtifacts artifacts: "output/Winx64/SageTVTranscoderWinx64_${version}.zip", onlyIfSuccessful: true
+                }
+            }
+        }
 
-		stage('Build Linux')
-		{
-		    steps
-		    {
-		        script
-		        {
-					sh "./build.sh clean"
-		            sh "./build.sh buildall Linux"
+        stage('Build Linux')
+        {
+            steps
+            {
+                script
+                {
+                    sh "./build.sh clean"
+                    sh "./build.sh buildall Linux"
 
-					archiveArtifacts artifacts: "output/Linux/SageTVTranscoderLinux_${version}.zip", onlyIfSuccessful: true
-		        }
-		    }
-		}
+                    archiveArtifacts artifacts: "output/Linux/SageTVTranscoderLinux_${version}.zip", onlyIfSuccessful: true
+                }
+            }
+        }
     }
 }
