@@ -42,6 +42,7 @@ SageTVTranscoder.log
 # External library Project Files #
 /x264
 /x265
+/nvenc
 /pkgconfig
 # Netbeans files #
 nbproject/private/

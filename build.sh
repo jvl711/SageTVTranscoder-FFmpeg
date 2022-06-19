@@ -64,6 +64,14 @@ if [ $1 = "clean" ]; then
 		cd ..
     fi
 
+	if [ -d nvenc ]; then
+        echo "Cleaning x264 directory"
+		cd nvenc
+		git reset --hard
+		git clean -fdx
+		cd ..
+    fi
+
     #if [ -d output ]; then
     #        echo "Removing outout directory"
     #        rm -Rf output
@@ -82,6 +90,52 @@ if [ $1 = "clean" ]; then
 fi
 
 echo "Building SageTVTranscoder version: $version"
+
+
+if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildnvenc" ]; then
+	
+	echo "Building NVENC"
+
+	if [ -d nvenc ]; then
+	    echo "NVENC already exists..."
+		cd nvenc
+		git reset --hard
+		git clean -fdx
+	else
+		echo "NVENC does not exist. Cloning library from videolan git"
+		git clone https://github.com/FFmpeg/nv-codec-headers.git
+		mv nv-codec-headers nvenc
+		cd nvenc
+		git checkout tags/n11.1.5.1 -b build
+	fi
+
+	
+	echo "Running build of NVENC"
+	
+	make -j$(nproc)
+	
+	if [ $? -eq 0 ]; then
+		echo "Compiliing NVENC completed: " $?
+	else	
+		echo "Error compiling: " $?
+		exit
+	fi
+	
+	echo "Installing NVENC"
+	
+	make install
+	
+	if [ $? -eq 0 ]; then
+		echo "Installing NVENC completed: " $?
+	else	
+		echo "Error installing: " $?
+		exit
+	fi
+	
+	cd -
+
+fi
+
 
 if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx265" ]; then
 
@@ -263,7 +317,8 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 	
 	echo "Configuring build for SageTVTranscoder/FFmpeg"
 	
-        export PKG_CONFIG_PATH=./pkgconfig/lib:./pkgconfig/lib/pkgconfig
+        #export PKG_CONFIG_PATH=./pkgconfig/lib:./pkgconfig/lib/pkgconfig:/usr/local/lib/pkgconfig:/usr/local/cuda/lib64
+        export PKG_CONFIG_PATH=./pkgconfig/lib:./pkgconfig/lib/pkgconfig:/usr/local/lib/pkgconfig
         echo PKG_CONFIG_PATH=$PKG_CONFIG_PATH
 	
 	if [ $buildTarget = "Winx32" ]; then
@@ -272,10 +327,15 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 
 		./configure \
 		--arch=x86 \
-		--enable-libx264 \
-		--enable-libx265 \
 		--target-os=mingw32 \
 		--cross-prefix=i686-w64-mingw32- \
+        --enable-nonfree \
+		--enable-libx264 \
+		--enable-libx265 \
+        --enable-dxva2 \
+        --enable-nvenc \
+        --enable-cuvid \
+        --enable-cuda \
 		--disable-ffplay \
 		--disable-ffprobe \
 		--enable-gpl \
@@ -287,6 +347,8 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 		--disable-demuxer=msnwc_tcp \
 		--extra-cflags="-static -I./pkgconfig/include -lstdc++ -lpthread" \
 		--extra-ldflags="-static -L./pkgconfig/lib -static-libgcc -static-libstdc++ "	
+		#--extra-cflags="-static -I./pkgconfig/include -I/usr/local/cuda/include -lstdc++ -lpthread" \
+		#--extra-ldflags="-static -L./pkgconfig/lib -L/usr/local/cuda/lib64 -static-libgcc -static-libstdc++ "	
 	
 		if [ $? -eq 0 ]; then
 			echo "Configuring completed: " $?

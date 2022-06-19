@@ -35,4 +35,13 @@ RUN apt-get install zip -y
 RUN apt-get install mingw-w64 -y
 #RUN apt-get install g++-mingw-w64-i686 -y
 
+#These are for CUDA library install
+#RUN apt-get install software-properties-common
+#RUN wget https://developer.download.nvidia.com/compute/cuda/repos/debian10/x86_64/cuda-keyring_1.0-1_all.deb
+#RUN sudo dpkg -i cuda-keyring_1.0-1_all.deb
+#RUN add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/debian10/x86_64/ /"
+#RUN add-apt-repository contrib
+#RUN apt update
+#RUN apt install cuda -y
+
 CMD ["/bin/bash"]
