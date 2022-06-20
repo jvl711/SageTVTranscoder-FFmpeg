@@ -296,7 +296,7 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx264" ]; then
 		
 		./configure \
 		--host=mingw64 \
-		--cross-prefix=x86_64-w64-mingw32- 
+		--cross-prefix=x86_64-w64-mingw32- \
 		--enable-static \
 		--disable-cli \
 		--disable-opencl \
@@ -395,8 +395,6 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 		--disable-demuxer=msnwc_tcp \
 		--extra-cflags="-static -I./pkgconfig/include -lstdc++ -lpthread" \
 		--extra-ldflags="-static -L./pkgconfig/lib -static-libgcc -static-libstdc++ "	
-		#--extra-cflags="-static -I./pkgconfig/include -I/usr/local/cuda/include -lstdc++ -lpthread" \
-		#--extra-ldflags="-static -L./pkgconfig/lib -L/usr/local/cuda/lib64 -static-libgcc -static-libstdc++ "	
 	
 		if [ $? -eq 0 ]; then
 			echo "Configuring completed: " $?
@@ -415,6 +413,10 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 		--cross-prefix=x86_64-w64-mingw32- \
 		--enable-libx264 \
 		--enable-libx265 \
+        --enable-dxva2 \
+        --enable-nvenc \
+        --enable-cuvid \
+        --enable-cuda \
 		--disable-ffplay \
 		--disable-ffprobe \
 		--enable-gpl \
@@ -438,11 +440,14 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 
 		echo "Configuring SageTVTranscoder/FFmpeg (Linux)"
 		#x265 not working.  Need to investigate further
-		#./configure --enable-libx264 --enable-libx265 --disable-ffplay --disable-ffprobe --prefix="./pkgconfig" --pkg-config="pkg-config --static" --enable-gpl --enable-static --disable-shared --disable-devices --disable-bzlib --disable-demuxer=msnwc_tcp --extra-libs="-lpthread -lm" --ld="g++" --enable-nonfree "--extra-cflags=-static -I./pkgconfig/include" "--extra-ldflags=-static -L./pkgconfig/lib"
 		
 		./configure \
 		--enable-libx265 \
 		--enable-libx264 \
+        --enable-dxva2 \
+        --enable-nvenc \
+        --enable-cuvid \
+        --enable-cuda \
 		--disable-ffplay \
 		--disable-ffprobe \
 		--enable-gpl \
