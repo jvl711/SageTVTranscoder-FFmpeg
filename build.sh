@@ -1,5 +1,10 @@
 #!/bin/sh
 
+#libx264 version
+libx265_version="3.5"
+libx264_version="stable"
+nvenc_version="11.1.5.1"
+
 #Get version number
 version=`cat SageTVTranscoderSettings`
 
@@ -12,6 +17,21 @@ fi
 
 if [ $1 = "version" ]; then
 	echo $version
+	exit
+fi
+
+if [ $1 = "libx265_version" ]; then
+	echo $libx265_version
+	exit
+fi
+
+if [ $1 = "libx264_version" ]; then
+	echo $libx264_version
+	exit
+fi
+
+if [ $1 = "nvenc_version" ]; then
+	echo $nvenc_version
 	exit
 fi
 
@@ -97,16 +117,21 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildnvenc" ]; then
 	echo "Building NVENC"
 
 	if [ -d nvenc ]; then
-	    echo "NVENC already exists..."
+	    echo "NVENC already exists... Cleaning directory"
 		cd nvenc
 		git reset --hard
 		git clean -fdx
+		git checkout master
+		git branch -D build
+		echo "Checking out version: $nvenc_version"
+		git checkout tags/n$nvenc_version -b build
 	else
 		echo "NVENC does not exist. Cloning library from videolan git"
 		git clone https://github.com/FFmpeg/nv-codec-headers.git
 		mv nv-codec-headers nvenc
 		cd nvenc
-		git checkout tags/n11.1.5.1 -b build
+		echo "Checking out version: $nvenc_version"
+		git checkout tags/n$nvenc_version -b build
 	fi
 
 	
@@ -118,7 +143,7 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildnvenc" ]; then
 		echo "Compiliing NVENC completed: " $?
 	else	
 		echo "Error compiling: " $?
-		exit
+		exit 1
 	fi
 	
 	echo "Installing NVENC"
@@ -129,7 +154,7 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildnvenc" ]; then
 		echo "Installing NVENC completed: " $?
 	else	
 		echo "Error installing: " $?
-		exit
+		exit 1
 	fi
 	
 	cd -
@@ -143,17 +168,19 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx265" ]; then
 	echo "Building x265"
 
 	if [ -d x265  ]; then
-	echo "x265  already exists..."
-	cd x265 
-	git reset --hard
-	git clean -fdx
+		echo "x265  already exists... Cleaning directory"
+		cd x265 
+		git reset --hard
+		git clean -fdx
+		echo "Checking out branch: Release_$libx265_version"
+		git checkout Release_$libx265_version
 	else
-	echo "x265 does not exist. Cloning library from videolan git"
-	#git clone https://github.com/videolan/x265.git
-	git clone https://bitbucket.org/multicoreware/x265_git
-	mv x265_git x265
-	cd x265
-	git checkout Release_3.5
+		echo "x265 does not exist. Cloning library from bitbucket git"
+		git clone https://bitbucket.org/multicoreware/x265_git
+		mv x265_git x265
+		cd x265
+		echo "Checking out branch: Release_$libx265_version"
+		git checkout Release_$libx265_version
 	fi
 
 	if [ $buildTarget = "Winx32" ]; then
@@ -205,7 +232,7 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx265" ]; then
 		echo "Compiliing x265 completed: " $?
 	else	
 		echo "Error compiling: " $?
-		exit
+		exit 1
 	fi
 
 	echo "Installing x265"
@@ -216,7 +243,7 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx265" ]; then
 		echo "Installing x265 completed: " $?
 	else	
 		echo "Error installing: " $?
-		exit
+		exit 1
 	fi
 
 	cd -
@@ -230,54 +257,75 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx264" ]; then
 	echo "Building x264"
 
 	if [ -d x264 ]; then
-	    echo "x264 already exists..."
+	    echo "x264 already exists... Cleaning directory"
 		cd x264
 		git reset --hard
 		git clean -fdx
+		echo "Checking out version: $libx264_version"
 	else
 		echo "x264 does not exist. Cloning library from videolan git"
 		git clone https://code.videolan.org/videolan/x264.git
 		cd x264
-		git checkout remotes/origin/stable
+		echo "Checking out version: $libx264_version"
+		git checkout remotes/origin/$libx264_version
 	fi
 
 	if [ $buildTarget = "Winx32" ]; then
 	
 		echo "Configuring x264 library for Winx32"
 		
-		./configure --host=mingw32 --cross-prefix=i686-w64-mingw32- --enable-static --disable-cli --disable-opencl --enable-pic --prefix="../pkgconfig"		
+		./configure \
+		--host=mingw32 \
+		--cross-prefix=i686-w64-mingw32- \
+		--enable-static \
+		--disable-cli \
+		--disable-opencl \
+		--enable-pic \
+		--prefix="../pkgconfig"		
 
 		if [ $? -eq 0 ]; then
 			echo "Configuring completed: " $?
 		else	
 			echo "Error configuring: " $?
-			exit
+			exit 1
 		fi
 
 	elif [ $buildTarget = "Winx64" ]; then		
 
 		echo "Configuring x264 library for Winx64"
 		
-		./configure --host=mingw64 --cross-prefix=x86_64-w64-mingw32- --enable-static --disable-cli --disable-opencl --enable-pic --prefix="../pkgconfig"		
+		./configure \
+		--host=mingw64 \
+		--cross-prefix=x86_64-w64-mingw32- 
+		--enable-static \
+		--disable-cli \
+		--disable-opencl \
+		--enable-pic \
+		--prefix="../pkgconfig"		
 
 		if [ $? -eq 0 ]; then
 			echo "Configuring completed: " $?
 		else	
 			echo "Error configuring: " $?
-			exit
+			exit 1
 		fi
 
 	else
 	
 		echo "Configuring x264 library"
 		
-		./configure --enable-static --disable-cli --disable-opencl --enable-pic --prefix="../pkgconfig/"
+		./configure \
+		--enable-static \
+		--disable-cli \
+		--disable-opencl \
+		--enable-pic \
+		--prefix="../pkgconfig/"
 		
 		if [ $? -eq 0 ]; then
 			echo "Configuring completed: " $?
 		else	
 			echo "Error configuring: " $?
-			exit
+			exit 1
 		fi
 		
 	fi
@@ -290,7 +338,7 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx264" ]; then
 		echo "Compiliing x264 completed: " $?
 	else	
 		echo "Error compiling: " $?
-		exit
+		exit 1
 	fi
 	
 	echo "Installing x264"
@@ -301,7 +349,7 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx264" ]; then
 		echo "Installing x264 completed: " $?
 	else	
 		echo "Error installing: " $?
-		exit
+		exit 1
 	fi
 	
 	cd -

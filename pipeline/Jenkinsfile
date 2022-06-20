@@ -29,6 +29,9 @@ pipeline
         GIT_HUB_TOKEN = credentials('GitHubToken')
 
         version = sh (script: "./build.sh version", returnStdout: true).trim()
+        libx265_version = sh (script: "./build.sh libx265_version", returnStdout: true).trim()
+        libx264_version = sh (script: "./build.sh libx264_version", returnStdout: true).trim()
+        nvenc_version = sh (script: "./build.sh nvenc_version", returnStdout: true).trim()
     }
 
     stages
@@ -41,7 +44,10 @@ pipeline
                 script
                 {
                     currentBuild.displayName = "${version}"
-                    currentBuild.description = "<B>Version:</B> ${version}<BR>\n"                
+                    currentBuild.description = "<B>Version:</B> ${version}<BR>\n"
+                    currentBuild.description = "<B>Libx265 Version:</B> ${libx265_version}<BR>\n"
+                    currentBuild.description = "<B>Libx264 Version:</B> ${libx264_version}<BR>\n"
+                    currentBuild.description = "<B>NVENC Version:</B> ${nvenc_version}<BR>\n"
                 }
             }
         }
