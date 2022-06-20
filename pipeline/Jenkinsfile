@@ -45,9 +45,9 @@ pipeline
                 {
                     currentBuild.displayName = "${version}"
                     currentBuild.description = "<B>Version:</B> ${version}<BR>\n"
-                    currentBuild.description = "<B>Libx265 Version:</B> ${libx265_version}<BR>\n"
-                    currentBuild.description = "<B>Libx264 Version:</B> ${libx264_version}<BR>\n"
-                    currentBuild.description = "<B>NVENC Version:</B> ${nvenc_version}<BR>\n"
+                    currentBuild.description += "<B>Libx265 Version:</B> ${libx265_version}<BR>\n"
+                    currentBuild.description += "<B>Libx264 Version:</B> ${libx264_version}<BR>\n"
+                    currentBuild.description += "<B>NVENC Version:</B> ${nvenc_version}<BR>\n"
                 }
             }
         }
