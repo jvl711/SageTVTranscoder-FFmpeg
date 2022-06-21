@@ -94,4 +94,17 @@ pipeline
             }
         }
     }
+
+	
+	stage('Publish local')
+    {
+         steps
+         {
+            cifsPublisher(publishers: [[configName: 'SageTVTranscoder', transfers: [[cleanRemote: false, excludes: '', flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: "builds/${version}", remoteDirectorySDF: false, removePrefix: "output", sourceFiles: "output/Winx32/*"]], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: true]])
+            cifsPublisher(publishers: [[configName: 'SageTVTranscoder', transfers: [[cleanRemote: false, excludes: '', flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: "builds/${version}", remoteDirectorySDF: false, removePrefix: "output", sourceFiles: "output/Winx64/*"]], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: true]])
+            cifsPublisher(publishers: [[configName: 'SageTVTranscoder', transfers: [[cleanRemote: false, excludes: '', flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: "builds/${version}", remoteDirectorySDF: false, removePrefix: "output", sourceFiles: "output/Linux/*"]], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: true]])
+
+         }
+    }
+	
 }
