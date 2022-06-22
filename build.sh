@@ -400,7 +400,7 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 			echo "Configuring completed: " $?
 		else	
 			echo "Error configuring: " $?
-			exit
+			exit 1
 		fi
 
 	elif [ $buildTarget = "Winx64" ]; then
@@ -433,7 +433,7 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 			echo "Configuring completed: " $?
 		else	
 			echo "Error configuring: " $?
-			exit
+			exit 1
 		fi
 
 	elif [ $buildTarget = "Linux" ]; then
@@ -444,7 +444,6 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 		./configure \
 		--enable-libx265 \
 		--enable-libx264 \
-        --enable-dxva2 \
         --enable-nvenc \
         --enable-cuvid \
         --enable-cuda \
@@ -466,7 +465,7 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 			echo "Configuring completed: " $?
 		else	
 			echo "Error configuring: " $?
-			exit
+			exit 1
 		fi
 	
 	fi
