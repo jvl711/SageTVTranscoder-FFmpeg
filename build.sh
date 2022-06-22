@@ -512,6 +512,8 @@ if [ $1 = "build" ] || [ $1 = "buildall" ] || [ $1 = "package" ] || [ $1 = "rebu
         #Create the zip archilve
         zip -r $zipFileName SageTVTranscoder.exe
 
+		#I do not think I will need this anymore.  I am going to keep this
+		#for potential future reusue.
         #move required dll for 32bit build.  This is a work around for now
         #if [ $buildTarget = "Winx32" ]; then
         #        cp ../../libgcc_s_dw2-1.dll.dep libgcc_s_dw2-1.dll

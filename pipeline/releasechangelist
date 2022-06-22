@@ -1,0 +1,4 @@
+- Added Cuda (NVENC) support for Nvidia hardware encoding/decoding
+- Added automated build Jenkins build process
+- Removed dependency on dll libraries in Windows builds
+- Added h.265 support in Linux build
