@@ -52,7 +52,7 @@ pipeline
             }
         }
 		
-		/*
+		
         stage('Build Windows x32')
         {
             steps
@@ -67,6 +67,7 @@ pipeline
             }
         }
 
+		/*
         stage('Build Windows x64')
         {
             steps
