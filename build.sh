@@ -491,7 +491,7 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 		--disable-bzlib \
 		--disable-demuxer=msnwc_tcp \
 		--extra-cflags="-static -I./pkgconfig/include -lstdc++ -lpthread" \
-		--extra-ldflags="-static -L./pkgconfig/lib -static-libgcc -static-libstdc++ "	
+		--extra-ldflags="-static -L./pkgconfig/lib -L./pkgconfig/lib/pkgconfig -static-libgcc -static-libstdc++ "	
 	
 		if [ $? -eq 0 ]; then
 			echo "Configuring completed: " $?
