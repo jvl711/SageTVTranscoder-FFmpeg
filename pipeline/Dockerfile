@@ -1,5 +1,5 @@
 #FROM debian:buster-slim
-FROM docker pull ubuntu:kinetic-20220602
+FROM ubuntu:kinetic-20220602
 
 RUN apt-get update
 
