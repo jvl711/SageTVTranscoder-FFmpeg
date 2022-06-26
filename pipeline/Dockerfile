@@ -31,9 +31,13 @@ RUN apt-get install nasm -y
 RUN apt-get install zlib1g-dev -y
 RUN apt-get install zip -y
 
+
+
 #wget https://github.com/intel/compute-runtime/releases/download/22.25.23529/intel-opencl-icd_22.25.23529_amd64.deb
 #libva-dev
 #sudo apt-get install googletest libgtest-dev libpciaccess0 libpciaccess-dev
+
+RUN apt-get install libva-dev libmfx-dev
 
 #MinGW for cross compiling
 RUN apt-get install mingw-w64 -y
