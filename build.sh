@@ -161,102 +161,102 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildnvenc" ]; then
 
 fi
 
-if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildintel" ]; then
-
-    
-	echo "Building Intel Media SDK"
-
-	if [ -d MediaSDK  ]; then
-		echo "intel already exists... Cleaning directory"
-		cd MediaSDK 
-		git reset --hard
-		git clean -fdx
-		git submodule init
-
-		#echo "Checking out branch: Release_$libx265_version"
-		git checkout intel-mediasdk-22.4.3
-		git pull
-	else
-		echo "intel does not exist. Cloning library from github"
-		git clone https://github.com/Intel-Media-SDK/MediaSDK.git
-		cd MediaSDK
-		git submodule init
-		#echo "Checking out branch: Release_$libx265_version"
-		git checkout intel-mediasdk-22.4.3
-		git pull
-	fi
-
-	mkdir build
-	cd build
-
-	if [ $buildTarget = "Winx32" ]; then
-
-		echo "Configuring x265 for Windows 32bit"
-
-		cmake -DWIN32=1 \
-		-DCMAKE_SYSTEM_NAME=Windows \
-		-D CMAKE_SYSTEM_PROCESSOR="x86" \
-		-D CMAKE_RC_COMPILER="/usr/bin/i686-w64-mingw32-windres" \
-		-D CMAKE_C_COMPILER="/usr/bin/i686-w64-mingw32-gcc" \
-		-D CMAKE_CXX_COMPILER="/usr/bin/i686-w64-mingw32-g++" \
-		-D CMAKE_INSTALL_PREFIX="../pkgconfig" \
-        -D CMAKE_CXX_FLAGS="-static-libgcc -static-libstdc++" \
-		-DBUILD_STATIC_LIBS=true \
-		-DENABLE_SHARED=false ..
-
-	elif [ $buildTarget = "Winx64" ]; then
-
-		echo "Configuring Intel Media SDK for Windows 64bit"
-
-		cmake -DCMAKE_SYSTEM_NAME=Windows \
-		-D CMAKE_SYSTEM_PROCESSOR="x86_64" \
-		-D CMAKE_RC_COMPILER="/usr/bin/x86_64-w64-mingw32-windres" \
-		-D CMAKE_C_COMPILER="/usr/bin/x86_64-w64-mingw32-gcc" \
-		-D CMAKE_CXX_COMPILER="/usr/bin/x86_64-w64-mingw32-g++" \
-		-D CMAKE_INSTALL_PREFIX="../pkgconfig" \
-        -D CMAKE_CXX_FLAGS="-static-libgcc -static-libstdc++" \
-		-DCMAKE_EXE_LINKER_FLAGS="-static" \
-		-DENABLE_SHARED=OFF ..
-
-	elif [ $buildTarget = "Linux" ]; then
-
-		echo "Configuring Intel Media SDK for Linux"
-
-		cmake -DCMAKE_SYSTEM_NAME=Linux \
-		-D CMAKE_SYSTEM_PROCESSOR="x86_64" \
-		-D CMAKE_INSTALL_PREFIX="../pkgconfig" \
-		-DCMAKE_EXE_LINKER_FLAGS="-static" \
-		-DENABLE_SHARED=OFF ..
-
-	fi
-
-	echo "Running build of Intel Media SDK"
-
-	make -j$(nproc)
-	
-	if [ $? -eq 0 ]; then
-		echo "Compiliing Intel Media SDK completed: " $?
-	else	
-		echo "Error compiling: " $?
-		exit 1
-	fi
-
-	echo "Installing Intel Media SDK"
-
-	make install
-
-	if [ $? -eq 0 ]; then
-		echo "Installing Intel Media SDK completed: " $?
-	else	
-		echo "Error installing: " $?
-		exit 1
-	fi
-
-	cd -
-
-    
-
-fi
+#if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildintel" ]; then
+#
+#    
+#	echo "Building Intel Media SDK"
+#
+#	if [ -d MediaSDK  ]; then
+#		echo "intel already exists... Cleaning directory"
+#		cd MediaSDK 
+#		git reset --hard
+#		git clean -fdx
+#		git submodule init
+#
+#		#echo "Checking out branch: Release_$libx265_version"
+#		git checkout intel-mediasdk-22.4.3
+#		git pull
+#	else
+#		echo "intel does not exist. Cloning library from github"
+#		git clone https://github.com/Intel-Media-SDK/MediaSDK.git
+#		cd MediaSDK
+#		git submodule init
+#		#echo "Checking out branch: Release_$libx265_version"
+#		git checkout intel-mediasdk-22.4.3
+#		git pull
+#	fi
+#
+#	mkdir build
+#	cd build
+#
+#	if [ $buildTarget = "Winx32" ]; then
+#
+#		echo "Configuring x265 for Windows 32bit"
+#
+#		cmake -DWIN32=1 \
+#		-DCMAKE_SYSTEM_NAME=Windows \
+#		-D CMAKE_SYSTEM_PROCESSOR="x86" \
+#		-D CMAKE_RC_COMPILER="/usr/bin/i686-w64-mingw32-windres" \
+#		-D CMAKE_C_COMPILER="/usr/bin/i686-w64-mingw32-gcc" \
+#		-D CMAKE_CXX_COMPILER="/usr/bin/i686-w64-mingw32-g++" \
+#		-D CMAKE_INSTALL_PREFIX="../pkgconfig" \
+#        -D CMAKE_CXX_FLAGS="-static-libgcc -static-libstdc++" \
+#		-DBUILD_STATIC_LIBS=true \
+#		-DENABLE_SHARED=false ..
+#
+#	elif [ $buildTarget = "Winx64" ]; then
+#
+#		echo "Configuring Intel Media SDK for Windows 64bit"
+#
+#		cmake -DCMAKE_SYSTEM_NAME=Windows \
+#		-D CMAKE_SYSTEM_PROCESSOR="x86_64" \
+#		-D CMAKE_RC_COMPILER="/usr/bin/x86_64-w64-mingw32-windres" \
+#		-D CMAKE_C_COMPILER="/usr/bin/x86_64-w64-mingw32-gcc" \
+#		-D CMAKE_CXX_COMPILER="/usr/bin/x86_64-w64-mingw32-g++" \
+#		-D CMAKE_INSTALL_PREFIX="../pkgconfig" \
+#       -D CMAKE_CXX_FLAGS="-static-libgcc -static-libstdc++" \
+#		-DCMAKE_EXE_LINKER_FLAGS="-static" \
+#		-DENABLE_SHARED=OFF ..
+#
+#	elif [ $buildTarget = "Linux" ]; then
+#
+#		echo "Configuring Intel Media SDK for Linux"
+#
+#		cmake -DCMAKE_SYSTEM_NAME=Linux \
+#		-D CMAKE_SYSTEM_PROCESSOR="x86_64" \
+#		-D CMAKE_INSTALL_PREFIX="../pkgconfig" \
+#		-DCMAKE_EXE_LINKER_FLAGS="-static" \
+#		-DENABLE_SHARED=OFF ..
+#
+#	fi
+#
+#	echo "Running build of Intel Media SDK"
+#
+#	make -j$(nproc)
+#	
+#	if [ $? -eq 0 ]; then
+#		echo "Compiliing Intel Media SDK completed: " $?
+#	else	
+#		echo "Error compiling: " $?
+#		exit 1
+#	fi
+#
+#	echo "Installing Intel Media SDK"
+#
+#	make install
+#
+#	if [ $? -eq 0 ]; then
+#		echo "Installing Intel Media SDK completed: " $?
+#	else	
+#		echo "Error installing: " $?
+#		exit 1
+#	fi
+#
+#	cd -
+#
+#   
+#
+#fi
 
 
 if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx265" ]; then
