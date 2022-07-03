@@ -115,6 +115,55 @@ pipeline
 				cifsPublisher(publishers: [[configName: 'SageTVTranscoder', transfers: [[cleanRemote: false, excludes: '', flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: "builds/${version}/Linux", remoteDirectorySDF: false, removePrefix: "pipeline", sourceFiles: "pipeline/releasename"]], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: true]])
 			}
     	}
+		
+		stage('Publish to GitHub')
+        {
+            when { expression { releaseToGit == true }}
+            steps
+            {
+                script
+                {                    
+                    sh('git remote set-url origin https://${GIT_HUB_TOKEN}@github.com/jvl711/SageTVTranscoder-FFmpeg.git')
+                    sh('git config --global user.email "josh@joshandmonique.com"')
+                    sh('git config --global user.name "Joshua Lewis"')
+
+                    //Delete the tag remote an local incase it already exists
+                    sh("git tag -d v${version} || exit 0")
+                    sh("git push --delete origin v${version} || exit 0")
+
+                    sh("git tag v${version}")
+                    sh("git push origin v${version}")
+
+                    try
+                    {
+                        CHANGELOG = readFile(file: 'pipeline/releasechangelist')
+                    }
+                    catch (err)
+                    {
+                        echo "Issue reading pipeline/releasechangelist file: ${err.localizedMessage}"
+                        CHANGELOG = ''
+                    }
+
+                    try
+                    {
+                        RELEASENAME = readFile(file: 'pipeline/releasename')
+                    }
+                    catch (err)
+                    {
+                        echo "Issue reading pipeline/releasename file: ${err.localizedMessage}"
+                        RELEASENAME = ''
+                    }
+
+                    sh("github-release delete --user jvl711 --repo \"SageTVTranscoder-FFmpeg\" --tag v${version} -s ${GIT_HUB_TOKEN} || exit 0")
+                    sh("github-release release -s ${GIT_HUB_TOKEN} --user jvl711 --repo \"SageTVTranscoder-FFmpeg\" --tag \"v${version}\" --name \"${RELEASENAME}\" --description \"${CHANGELOG}\"")
+                    sh("sleep 5s")
+                    //Add apk to the release
+                    sh("github-release upload -s ${GIT_HUB_TOKEN} --user jvl711 --repo \"SageTVTranscoder-FFmpeg\" --tag \"v${version}\" --file \"output/Winx32/SageTVTranscoderWinx32_v${version}.zip\"")
+                    sh("github-release upload -s ${GIT_HUB_TOKEN} --user jvl711 --repo \"SageTVTranscoder-FFmpeg\" --tag \"v${version}\" --file \"output/Winx32/SageTVTranscoderWinx64_v${version}.zip\"")
+                    sh("github-release upload -s ${GIT_HUB_TOKEN} --user jvl711 --repo \"SageTVTranscoder-FFmpeg\" --tag \"v${version}\" --file \"output/Winx32/SageTVTranscoderLinux_v${version}.zip\"")
+                }
+            }
+        }
 
     }
 }

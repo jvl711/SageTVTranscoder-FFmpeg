@@ -1,5 +1,5 @@
-#FROM debian:buster-slim
-FROM ubuntu:kinetic-20220602
+FROM debian:buster-slim
+#FROM ubuntu:kinetic-20220602
 
 RUN apt-get update
 
@@ -36,12 +36,11 @@ RUN apt-get install zip -y
 #wget https://github.com/intel/compute-runtime/releases/download/22.25.23529/intel-opencl-icd_22.25.23529_amd64.deb
 #libva-dev
 #sudo apt-get install googletest libgtest-dev libpciaccess0 libpciaccess-dev
+#RUN apt-get install libva-dev libmfx-dev
 
-RUN apt-get install libva-dev libmfx-dev
 
 #MinGW for cross compiling
 RUN apt-get install mingw-w64 -y
-#RUN apt-get install g++-mingw-w64-i686 -y
 
 #These are for CUDA library install
 #RUN apt-get install software-properties-common
@@ -51,5 +50,11 @@ RUN apt-get install mingw-w64 -y
 #RUN add-apt-repository contrib
 #RUN apt update
 #RUN apt install cuda -y
+
+
+#Install go and github-release app
+ENV PATH="/root/go/bin:$PATH"
+RUN apt-get install -y golang
+RUN go get github.com/github-release/github-release
 
 CMD ["/bin/bash"]

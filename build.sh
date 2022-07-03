@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#libx264 version
+#Library versions
 libx265_version="3.5"
 libx264_version="stable"
 nvenc_version="11.1.5.1"
