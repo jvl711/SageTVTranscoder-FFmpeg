@@ -118,7 +118,7 @@ pipeline
 		
 		stage('Publish to GitHub')
         {
-            when { expression { releaseToGit == true }}
+            when { expression { params.releaseToGit == true }}
             steps
             {
                 script
