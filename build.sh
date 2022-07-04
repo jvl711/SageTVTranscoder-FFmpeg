@@ -544,7 +544,6 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
         --enable-nvenc \
         --enable-cuvid \
         --enable-cuda \
-		--enable-libmfx \
 		--disable-ffplay \
 		--disable-ffprobe \
 		--enable-gpl \
