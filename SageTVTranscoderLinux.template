@@ -22,7 +22,8 @@
     1.0.2 - Fixed an issue with thumbnail generation on client machine. "stv://127.0.0.1/" translated to locally accessible path.
     1.0.3 - Fixed an issue with livetv transcoding (ACTIVEFILE/INACTIVEFILE).  Not stoping transcode at end of recording.
     1.0.4 - Added libx265 to the build
-	1.0.5 - Added linux build.  Will not be releasing winx32 or winx64 in this version since there was no change.  This linux build is beta.
+	1.0.5 - Added linux build.  Added DLLs that were required for the windows builds with x265
+	1.0.6 - Added linux build.  Will not be releasing winx32 or winx64 in this version since there was no change.  This linux build is beta.
 	]]></ReleaseNotes>
 </SageTVPlugin>
 
