@@ -512,7 +512,7 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 		--enable-libx264 \
 		--enable-libx265 \
         --enable-dxva2 \
-		--enable-nvdec \        
+		--enable-nvdec \
 		--enable-nvenc \
         --enable-cuvid \
         --enable-cuda \
