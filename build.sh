@@ -478,6 +478,7 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 		--enable-libx264 \
 		--enable-libx265 \
         --enable-dxva2 \
+		--enable-nvdec \
         --enable-nvenc \
         --enable-cuvid \
         --enable-cuda \
@@ -511,7 +512,8 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 		--enable-libx264 \
 		--enable-libx265 \
         --enable-dxva2 \
-        --enable-nvenc \
+		--enable-nvdec \        
+		--enable-nvenc \
         --enable-cuvid \
         --enable-cuda \
 		--disable-ffplay \
@@ -541,6 +543,7 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 		./configure \
 		--enable-libx265 \
 		--enable-libx264 \
+		--enable-nvdec \
         --enable-nvenc \
         --enable-cuvid \
         --enable-cuda \
