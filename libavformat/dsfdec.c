@@ -124,12 +124,12 @@ static int dsf_read_header(AVFormatContext *s)
 
     dsf->audio_size = avio_rl64(pb) / 8 * st->codecpar->channels;
     st->codecpar->block_align = avio_rl32(pb);
-    if (st->codecpar->block_align > INT_MAX / st->codecpar->channels) {
-        avpriv_request_sample(s, "block_align overflow");
+    if (st->codecpar->block_align > INT_MAX / st->codecpar->channels || st->codecpar->block_align <= 0) {
+        avpriv_request_sample(s, "block_align invalid");
         return AVERROR_INVALIDDATA;
     }
     st->codecpar->block_align *= st->codecpar->channels;
-    st->codecpar->bit_rate = st->codecpar->channels * st->codecpar->sample_rate * 8LL;
+    st->codecpar->bit_rate = st->codecpar->channels * 8LL * st->codecpar->sample_rate;
     avpriv_set_pts_info(st, 64, 1, st->codecpar->sample_rate);
     avio_skip(pb, 4);
 
