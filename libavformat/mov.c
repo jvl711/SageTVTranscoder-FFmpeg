@@ -7049,6 +7049,11 @@ static int mov_read_default(MOVContext *c, AVIOContext *pb, MOVAtom atom)
                   a.type == MKTAG('h','o','o','v')) &&
                 a.size >= 8 &&
                 c->fc->strict_std_compliance < FF_COMPLIANCE_STRICT) {
+                uint32_t type;
+                avio_skip(pb, 4);
+                type = avio_rl32(pb);
+                if (avio_feof(pb))
+                    break;
                 avio_seek(pb, -8, SEEK_CUR);
                 if (type == MKTAG('m','v','h','d') ||
                     type == MKTAG('c','m','o','v')) {
@@ -7776,6 +7781,8 @@ static int mov_read_header(AVFormatContext *s)
         switch (st->codecpar->codec_type) {
         case AVMEDIA_TYPE_AUDIO:
             err = ff_replaygain_export(st, s->metadata);
+            if (err < 0)
+                goto fail;
             break;
         case AVMEDIA_TYPE_VIDEO:
             if (sc->display_matrix) {
