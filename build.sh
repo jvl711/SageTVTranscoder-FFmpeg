@@ -219,6 +219,7 @@ if [ $1 = "buildlibs" ] || [ $1 = "buildall" ] || [ $1 = "buildx265" ]; then
 		cmake -DCMAKE_SYSTEM_NAME=Linux \
 		-D CMAKE_SYSTEM_PROCESSOR="x86_64" \
 		-D CMAKE_INSTALL_PREFIX="../pkgconfig" \
+        -D CMAKE_CXX_FLAGS="-static-libgcc -static-libstdc++" \
 		-DCMAKE_EXE_LINKER_FLAGS="-static" \
 		-DENABLE_SHARED=OFF source
 
@@ -458,8 +459,8 @@ if [ $1 = "build" ] || [ $1 = "buildall" ]; then
 		--disable-demuxer=msnwc_tcp \
 		--extra-libs="-lpthread -lm" \
         --ld="g++" \
-		--extra-cflags="-I./pkgconfig/include -lstdc++ -lpthread" \
-		--extra-ldflags="-L./pkgconfig/lib -static-libgcc -static-libstdc++"
+		--extra-cflags="-static -I./pkgconfig/include -lstdc++ -lpthread" \
+		--extra-ldflags="-static -L./pkgconfig/lib -static-libgcc -static-libstdc++"
 
 		if [ $? -eq 0 ]; then
 			echo "Configuring completed: " $?
