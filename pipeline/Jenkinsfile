@@ -175,9 +175,9 @@ pipeline
                     sh("github-release release -s ${GIT_HUB_TOKEN} --user jvl711 --repo \"JavaFFmpegLibrary\" --tag \"v${version}\" --name \"${RELEASENAME}\" --description \"${CHANGELOG}\"")
                     sh("sleep 5s")
                     //Add apk to the release
-                    sh("github-release upload -s ${GIT_HUB_TOKEN} --user jvl711 --repo \"SageTVTranscoder-FFmpeg\" --tag \"v${version}\" --name \"SageTVTranscoderLinux_${version}.apk\" --file \"output/Linux/SageTVTranscoderLinux_${version}.apk\"")
-                    sh("github-release upload -s ${GIT_HUB_TOKEN} --user jvl711 --repo \"SageTVTranscoder-FFmpeg\" --tag \"v${version}\" --name \"SageTVTranscoderWinx32_${version}.apk\" --file \"output/Linux/SageTVTranscoderWinx32_${version}.apk\"")
-                    sh("github-release upload -s ${GIT_HUB_TOKEN} --user jvl711 --repo \"SageTVTranscoder-FFmpeg\" --tag \"v${version}\" --name \"SageTVTranscoderWinx64_${version}.apk\" --file \"output/Linux/SageTVTranscoderWinx64_${version}.apk\"")
+                    sh("github-release upload -s ${GIT_HUB_TOKEN} --user jvl711 --repo \"SageTVTranscoder-FFmpeg\" --tag \"v${version}\" --name \"SageTVTranscoderLinux_${version}.zip\" --file \"output/Linux/SageTVTranscoderLinux_${version}.zip\"")
+                    sh("github-release upload -s ${GIT_HUB_TOKEN} --user jvl711 --repo \"SageTVTranscoder-FFmpeg\" --tag \"v${version}\" --name \"SageTVTranscoderWinx32_${version}.zip\" --file \"output/Linux/SageTVTranscoderWinx32_${version}.zip\"")
+                    sh("github-release upload -s ${GIT_HUB_TOKEN} --user jvl711 --repo \"SageTVTranscoder-FFmpeg\" --tag \"v${version}\" --name \"SageTVTranscoderWinx64_${version}.zip\" --file \"output/Linux/SageTVTranscoderWinx64_${version}.zip\"")
                 }
             }
         }
